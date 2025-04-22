@@ -107,6 +107,15 @@
   }
 }
 
+[data-sidebar="sidebar"] {
+  background-color: transparent !important;
+}
+
+.dark [data-sidebar="sidebar"] {
+  background-color: transparent !important;
+}
+
+
 .skeleton {
   * {
     pointer-events: none !important;
@@ -316,4 +325,17 @@
 
 .animate-blink {
   animation: blink 0.8s ease-in-out infinite;
+}
+
+.gradientStyle {
+  background: linear-gradient(60deg,
+    #ff6b6b,   /* red-pink */
+    #e85ea2,   /* pink */
+    #c86dd7,   /* purple */
+    #9179e0,   /* light violet */
+    #5a8de9,   /* blue */
+    #4aa3f7,   /* light blue */
+    #3dd8ff,   /* cyan */
+    #53f3b0   /* mint green */
+  );
 }

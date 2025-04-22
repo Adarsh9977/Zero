@@ -59,10 +59,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Sidebar
         collapsible="icon"
         {...props}
-        className="bg-offsetWhite dark:bg-offsetDark flex flex-col items-center select-none"
+        className="flex flex-col items-center select-none !bg-transparent"
       >
-        <div className="flex w-full flex-col">
-          <SidebarHeader className="flex flex-col gap-2 p-2">
+        <div className="flex w-full flex-col !bg-transparent">
+          <SidebarHeader className="flex flex-col gap-2 p-2 !bg-transparent">
             <NavUser />
             <AnimatePresence mode="wait">
               {showComposeButton && (
@@ -93,7 +93,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarContent>
         </div>
 
-        <div className="mb-4 mt-auto flex w-full items-center px-4">
+        <div className="mb-4 mt-auto flex w-full items-center px-4 bg-transparent">
           <Link href="/" className="relative h-6 w-6">
             <Image
               src="/black-icon.svg"

@@ -301,14 +301,14 @@ export function MailLayout() {
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
-          className="rounded-inherit gap-0.5 overflow-hidden"
+          className="rounded-inherit gap-0.5 overflow-hidden bg-transparent"
         >
           <ResizablePanel
             className={cn('border-none !bg-transparent', threadId ? 'md:hidden lg:block' : '')}
             defaultSize={isMobile ? 100 : 25}
             minSize={isMobile ? 100 : 25}
           >
-            <div className="bg-offsetLight dark:bg-offsetDark flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
+            <div className="bg-muted/20 flex-1 flex-col overflow-y-auto shadow-inner md:flex md:rounded-2xl md:border md:shadow-sm">
               <div
                 className={cn(
                   'sticky top-0 z-10 flex items-center justify-between gap-1.5 border-b p-2 transition-colors md:min-h-14',
@@ -692,9 +692,9 @@ function CategorySelect() {
           <SelectValue placeholder="Select category" />
         )}
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="bg-muted/70">
         {categories.map((category) => (
-          <SelectItem key={category.id} value={category.id} className="cursor-pointer">
+          <SelectItem key={category.id} value={category.id} className={`cursor-pointer hover:${category.colors}`}>
             <div className="flex items-center gap-2">
               {category.icon}
               <span>{category.name}</span>
