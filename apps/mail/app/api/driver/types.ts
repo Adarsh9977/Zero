@@ -31,6 +31,8 @@ export interface MailManager {
   getScope(): string;
   markAsRead(id: string[]): Promise<void>;
   markAsUnread(id: string[]): Promise<void>;
+  muteThread(id: string[]): Promise<void>;
+  unMuteThread(id: string[]): Promise<void>;
   normalizeIds(id: string[]): { threadIds: string[] };
   modifyLabels(
     id: string[],

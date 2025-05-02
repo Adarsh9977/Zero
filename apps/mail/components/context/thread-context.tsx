@@ -24,9 +24,10 @@ import {
   StarOff,
   Trash,
   MailOpen,
+  Bell,
 } from 'lucide-react';
 import { moveThreadsTo, ThreadDestination } from '@/lib/thread-actions';
-import { deleteThread, markAsRead, markAsUnread, toggleStar } from '@/actions/mail';
+import { deleteThread, markAsRead, markAsUnread, muteThread,unMuteThread, toggleStar } from '@/actions/mail';
 import { useThread, useThreads } from '@/hooks/use-threads';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useParams, useRouter } from 'next/navigation';
@@ -350,6 +351,32 @@ export function ThreadContextMenu({
     ];
   };
 
+  const isMuted = useMemo(() => {
+    return threadData?.latest?.tags?.includes('MUTED') ?? false;
+  }, [threadData]);
+
+  const handleMuteThread = () => {
+    const targets = mail.bulkSelected.length ? mail.bulkSelected : [threadId];
+    const action = isMuted ? unMuteThread : muteThread;
+
+    const promise = action({ ids: targets }).then(() => {
+      setMail((prev) => ({ ...prev, bulkSelected: [] }));
+      return mutateThread();
+    });
+
+    toast.promise(promise, {
+      loading: isMuted
+        ?  "Unmuting thread..."
+        :  "Muting thread...",
+      success: isMuted
+        ?  "Thread unmuted"
+        :  "Thread muted",
+      error: isMuted
+        ?  "Failed to unmute thread"
+        :  "Failed to mute thread",
+    });
+  };
+
   const otherActions: EmailAction[] = [
     {
       id: 'toggle-read',
@@ -375,10 +402,10 @@ export function ThreadContextMenu({
     },
     {
       id: 'mute',
-      label: t('common.mail.muteThread'),
-      icon: <BellOff className="mr-2.5 h-4 w-4" />,
-      action: noopAction,
-      disabled: true, // TODO: Mute thread functionality to be implemented
+      label: isMuted ? "Unmute thread" : "Mute thread",
+      icon: isMuted ? <BellOff className="mr-2.5 h-4 w-4" /> : <Bell className="mr-2.5 h-4 w-4" />,
+      action: handleMuteThread,
+      disabled: false
     },
   ];
 

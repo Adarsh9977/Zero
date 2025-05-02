@@ -459,14 +459,16 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
 
     for (let i = 0; i < threadIds.length; i += chunkSize) {
       const chunk = threadIds.slice(i, i + chunkSize);
-
       const promises = chunk.map(async (threadId) => {
         try {
+          console.log('Modifying thread', requestBody, threadId);
+          console.log(gmail.context._options.auth)
           const response = await gmail.users.threads.modify({
             userId: 'me',
             id: threadId,
             requestBody: requestBody,
           });
+          console.log('Response after modify', response);
           return { threadId, status: 'fulfilled' as const, value: response.data };
         } catch (error: any) {
           const errorMessage = error?.errors?.[0]?.message || error.message || error;
@@ -540,7 +542,27 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
         return aliases;
       });
     },
+    muteThread: async (threadIds: string[]) => {
+      console.log('muteThread called with threadIds:', threadIds);
+      return withErrorHandler(
+      'muteThread',
+        async () => {
+          await modifyThreadLabels(threadIds, { addLabelIds: ['MUTED'] });
+        },
+        { threadIds },
+      )
+    },
+    unMuteThread: async (threadIds: string[]) => {
+      return withErrorHandler(
+      'unMuteThread',
+        async () => {
+          await modifyThreadLabels(threadIds, { removeLabelIds: ['MUTED'] });
+        },
+        { threadIds },
+      );
+    },
     markAsRead: async (threadIds: string[]) => {
+      console.log('markAsRead called with threadIds:', threadIds);
       return withErrorHandler(
         'markAsRead',
         async () => {
@@ -804,7 +826,8 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       return withErrorHandler(
         'delete',
         async () => {
-          const res = await gmail.users.messages.delete({ userId: 'me', id });
+          await auth.refreshAccessToken();
+          const res = await gmail.users.threads.delete({ userId: 'me', id });
           return res.data;
         },
         { id },

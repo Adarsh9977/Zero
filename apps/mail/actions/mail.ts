@@ -39,6 +39,30 @@ export const markAsUnread = async ({ ids }: { ids: string[] }) => {
   }
 };
 
+export const muteThread = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+
+    await driver.muteThread(ids);
+    return { success: true };
+  } catch (error) {
+    console.error('Error muting thread:', error);
+    throw error;
+  }
+};
+
+export const unMuteThread = async ({ ids }: { ids: string[] }) => {
+  try {
+    const driver = await getActiveDriver();
+
+    await driver.unMuteThread(ids);
+    return { success: true };
+  } catch (error) {
+    console.error('Error un-muting thread:', error);
+    throw error;
+  }
+};
+
 export const modifyLabels = async ({
   threadId,
   addLabels = [],
@@ -113,6 +137,49 @@ export const toggleStar = async ({ ids }: { ids: string[] }) => {
     throw error;
   }
 };
+
+// export const toggleMuteThread = async ({ ids }: { ids: string[] }) => {
+//   try {
+//     const driver = await getActiveDriver();
+//     const { threadIds } = driver.normalizeIds(ids);
+
+//     if (!threadIds.length) {
+//       return { success: false, error: 'No thread IDs provided' };
+//     }
+
+//     // Check if any of the threads are already muted
+//     const threadResults = await Promise.allSettled(threadIds.map((id) => driver.get(id)));
+
+//     let anyMuted = false;
+//     let processedThreads = 0;
+
+//     for (const result of threadResults) {
+//       if (result.status === 'fulfilled' && result.value && result.value.messages.length > 0) {
+//         processedThreads++;
+//         const isThreadMuted = result.value.messages.some((message: ParsedMessage) =>
+//           message.tags?.find((tag) => tag.startsWith('MUTED')),
+//         );
+//         if (isThreadMuted) {
+//           anyMuted = true;
+//           break;
+//         }
+//       }
+//     }
+
+//     const shouldMute = processedThreads > 0 && !anyMuted;
+//     console.log("Should mute", shouldMute);
+
+//     await driver.modifyLabels(threadIds, {
+//       addLabels: shouldMute ? ['MUTED'] : [],
+//       removeLabels: shouldMute ? [] : ['MUTED'],
+//     });
+
+//     return { success: true };
+//   } catch (error) {
+//     console.error('Error toggling mute thread:', error);
+//     throw error;
+//   }
+// };
 
 export const deleteThread = async ({ id }: { id: string }) => {
   console.log('Deleting thread:', id);
