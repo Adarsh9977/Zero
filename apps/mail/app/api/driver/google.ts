@@ -624,27 +624,31 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
       );
     },
     count: async () => {
-      return withErrorHandler('count', async () => {
-        const userLabels = await gmail.users.labels.list({
-          userId: 'me',
-        });
+      return withErrorHandler(
+        'count',
+        async () => {
+          const userLabels = await gmail.users.labels.list({
+            userId: 'me',
+          });
 
-        if (!userLabels.data.labels) {
-          return [];
-        }
-        return Promise.all(
-          userLabels.data.labels.map(async (label) => {
-            const res = await gmail.users.labels.get({
-              userId: 'me',
-              id: label.id ?? undefined,
-            });
-            return {
-              label: res.data.name ?? res.data.id ?? '',
-              count: Number(res.data.threadsUnread) ?? undefined,
-            };
-          }),
-        );
-      });
+          if (!userLabels.data.labels) {
+            return [];
+          }
+          return Promise.all(
+            userLabels.data.labels.map(async (label) => {
+              const res = await gmail.users.labels.get({
+                userId: 'me',
+                id: label.id ?? undefined,
+              });
+              return {
+                label: res.data.name ?? res.data.id ?? '',
+                count: Number(res.data.threadsUnread) ?? undefined,
+              };
+            }),
+          );
+        },
+        { email: config.auth?.email },
+      );
     },
     list: async (
       folder: string,
@@ -670,7 +674,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           });
           return { ...res.data, threads: res.data.threads } as any;
         },
-        { folder, q, maxResults, _labelIds, pageToken },
+        { folder, q, maxResults, _labelIds, pageToken, email: config.auth?.email },
       );
     },
     get: async (id: string) => {
@@ -802,7 +806,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
             return { messages, latest: messages[0], hasUnread, totalReplies: messages.length };
           });
         },
-        { id },
+        { id, email: config.auth?.email },
       );
     },
     create: async (data) => {
@@ -819,7 +823,7 @@ export const driver = async (config: IConfig): Promise<MailManager> => {
           });
           return res.data;
         },
-        { data },
+        { data, email: config.auth?.email },
       );
     },
     delete: async (id: string) => {
