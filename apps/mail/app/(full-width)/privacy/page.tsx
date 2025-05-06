@@ -23,7 +23,7 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-auto bg-white dark:bg-[#111111]">
-      <div className="relative z-10 flex flex-grow flex-col">
+      <div className="relative z-10 flex grow flex-col">
         <div className="absolute left-4 top-4 md:left-8 md:top-8">
           <Button
             variant="ghost"

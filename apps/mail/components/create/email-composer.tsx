@@ -719,7 +719,7 @@ export function EmailComposer({
                   </PopoverTrigger>
 
                   <PopoverContent
-                    className="z-[100] w-[340px] rounded-lg p-0 shadow-lg dark:bg-[#202020]"
+                    className="z-100 w-[340px] rounded-lg p-0 shadow-lg dark:bg-[#202020]"
                     align="start"
                     sideOffset={6}
                   >
@@ -749,7 +749,7 @@ export function EmailComposer({
                               className="group flex items-center justify-between gap-3 rounded-md px-1.5 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"
                             >
                               <div className="flex min-w-0 flex-1 items-center gap-3">
-                                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-[#F0F0F0] dark:bg-[#2C2C2C]">
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-[#F0F0F0] dark:bg-[#2C2C2C]">
                                   {file.type.startsWith('image/') ? (
                                     <img
                                       src={URL.createObjectURL(file)}
@@ -778,7 +778,7 @@ export function EmailComposer({
                                   >
                                     <span className="truncate">{truncatedName}</span>
                                     {extension && (
-                                      <span className="ml-0.5 flex-shrink-0 text-[10px] text-[#8C8C8C] dark:text-[#9A9A9A]">
+                                      <span className="ml-0.5 shrink-0 text-[10px] text-[#8C8C8C] dark:text-[#9A9A9A]">
                                         .{extension}
                                       </span>
                                     )}
@@ -802,7 +802,7 @@ export function EmailComposer({
                                   });
                                   setHasUnsavedChanges(true);
                                 }}
-                                className="focus-visible:ring-ring ml-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-transparent hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2"
+                                className="focus-visible:ring-ring ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-transparent hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2"
                                 aria-label={`Remove ${file.name}`}
                               >
                                 <XIcon className="h-3.5 w-3.5 text-[#6D6D6D] hover:text-black dark:text-[#9B9B9B] dark:hover:text-white" />

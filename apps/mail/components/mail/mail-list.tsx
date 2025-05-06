@@ -467,7 +467,7 @@ const Thread = memo(
             {isHovered && !isMobile && (
               <div
                 className={cn(
-                  'absolute right-2 z-[25] flex -translate-y-1/2 items-center gap-1 rounded-xl border bg-white p-1 shadow-sm dark:bg-[#1A1A1A]',
+                  'absolute right-2 z-25 flex -translate-y-1/2 items-center gap-1 rounded-xl border bg-white p-1 shadow-sm dark:bg-[#1A1A1A]',
                   index === 0 ? 'top-4' : 'top-[-1]',
                 )}
               >

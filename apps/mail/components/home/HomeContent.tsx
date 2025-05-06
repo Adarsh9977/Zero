@@ -241,7 +241,7 @@ export default function HomeContent() {
           <Link
             href="https://x.com/zerodotemail"
             target="_blank"
-            className="text-foreground flex items-center gap-1 rounded-full bg-gradient-to-b from-neutral-600 to-neutral-700 px-3 py-1 text-sm"
+            className="text-foreground flex items-center gap-1 rounded-full bg-linear-to-b from-neutral-600 to-neutral-700 px-3 py-1 text-sm"
           >
             <span>Learn More</span>
             <ArrowRight className="ml-1" />
@@ -279,7 +279,7 @@ export default function HomeContent() {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="relative h-12 w-52 rounded-none !bg-transparent !shadow-none"
+                  className="relative h-12 w-52 rounded-none bg-transparent! shadow-none!"
                   ref={(el) => {
                     if (el) tabRefs.current[index] = el;
                   }}
@@ -343,11 +343,11 @@ const CustomTabGlow = ({ glowStyle }: { glowStyle: { left: number; width: number
         style={{
           width: `${glowStyle.width}px`,
         }}
-        className="bottom-0 h-12 translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.3)_0%,_transparent_70%)] blur-md"
+        className="bottom-0 h-12 translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.3)_0%,transparent_70%)] blur-md"
       />
       <div
         style={{ width: `${glowStyle.width}px` }}
-        className="bottom-0 h-px rounded-full bg-gradient-to-r from-transparent via-white/90 to-transparent"
+        className="bottom-0 h-px rounded-full bg-linear-to-r from-transparent via-white/90 to-transparent"
       />
     </div>
   );

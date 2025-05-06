@@ -259,7 +259,7 @@ export default function LabelsPage() {
                             </span>
                           </Badge>
                         </div>
-                        <div className="absolute right-2 z-[25] flex items-center gap-1 rounded-xl border bg-white p-1 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 dark:bg-[#1A1A1A]">
+                        <div className="absolute right-2 z-25 flex items-center gap-1 rounded-xl border bg-white p-1 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 dark:bg-[#1A1A1A]">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
