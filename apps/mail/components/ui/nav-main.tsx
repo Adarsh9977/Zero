@@ -491,12 +491,55 @@ function NavItem(item: NavItemProps & { href: string }) {
     <SidebarMenuButton
       tooltip={state === 'collapsed' ? t(item.title as MessageKey) : undefined}
       className={cn(
-        'hover:bg-subtleWhite flex items-center dark:hover:bg-[#202020]',
-        item.isActive && 'bg-subtleWhite text-accent-foreground dark:bg-[#202020]',
+        'flex items-center',
+        item.id === 'inbox'
+        ? 'hover:bg-[#f7d4a6b7] dark:hover:bg-[#452906] text-[#ff9a17] hover:text-[#ff9a17] active:bg-[#f7d4a6b7] dark:active:bg-[#452906] active:text-[#ff9a17]'
+          : item.id ==='sent'
+        ? 'hover:bg-[#c1ed9d93] dark:hover:bg-[#1a2e0a] text-[#0f8c3d] hover:text-[#0f8c3d] active:bg-[#c1ed9d93] dark:active:bg-[#1a2e0a] active:text-[#0f8c3d]'
+          : item.id === 'archive'
+        ? 'hover:bg-[#c0a6f7a3] dark:hover:bg-[#160b2e] text-[#8B5CF6] hover:text-[#8B5CF6] active:bg-[#c0a6f7a3] dark:active:bg-[#160b2e] active:text-[#8B5CF6]'
+          : item.id ==='spam'
+        ? 'hover:bg-[#f0adc484] dark:hover:bg-[#3b091a] text-[#da0969] hover:text-[#da0969] active:bg-[#f0adc484] dark:active:bg-[#3b091a] active:text-[#da0969]'
+          : item.id === 'drafts'
+        ? 'hover:bg-[#bcf7f794] dark:hover:bg-[#052626] text-[#09e0e0] hover:text-[#09e0e0] active:bg-[#bcf7f794] dark:active:bg-[#052626] active:text-[#09e0e0]'
+          : item.id === 'trash'
+        ? 'hover:bg-[#f07d8989] dark:hover:bg-[#380409] text-[#F43F5E] hover:text-[#F43F5E] active:bg-[#f07d8989] dark:active:bg-[#380409] active:text-[#F43F5E]'
+          : '',
+
+        item.isActive && (
+          item.id === 'inbox'
+            ? 'bg-[#f7d4a6b7] dark:bg-[#452906]'
+            : item.id === 'sent'
+            ? 'bg-[#c1ed9d93] dark:bg-[#1a2e0a]'
+            : item.id === 'archive'
+            ? 'bg-[#c0a6f7a3] dark:bg-[#09183d]'
+            : item.id === 'spam'
+            ? 'bg-[#f0adc484] dark:bg-[#3b091a]'
+            : item.id === 'drafts'
+            ? 'bg-[#bcf7f794] dark:bg-[#052626]'
+            : item.id === 'trash'
+            ? 'bg-[#f07d8989] dark:bg-[#380409]'
+            : ''
+        ),
       )}
       onClick={() => setOpenMobile(false)}
     >
-      {item.icon && <item.icon ref={iconRef} className="mr-2 shrink-0" />}
+      {item.icon && <item.icon ref={iconRef} className={cn(
+      'mr-2 shrink-0',
+      item.id === 'inbox'
+        ? 'fill-[#ff9a17]'
+        : item.id === 'sent'
+        ? 'fill-[#0f8c3d]'
+        : item.id === 'archive'
+        ? 'fill-[#8B5CF6]'
+        : item.id === 'spam'
+        ? 'fill-[#da0969]'
+        : item.id === 'drafts'
+        ? 'fill-[#09e0e0]'
+        : item.id === 'trash'
+        ? 'fill-[#F43F5E]'
+        : ''
+    )} />}
       <p className="mt-0.5 min-w-0 flex-1 truncate text-[13px]">{t(item.title as MessageKey)}</p>
       {stats &&
         item.id?.toLowerCase() !== 'sent' &&
