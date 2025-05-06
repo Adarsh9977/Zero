@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import React from 'react';
 import { z } from 'zod';
+import { ThemeColorToggle } from '../theme/theme-color-toggle';
 
 const tabs = [
   { label: 'Chat With Your Inbox', value: 'smart-categorization' },
@@ -172,6 +173,7 @@ export default function HomeContent() {
             </NavigationMenu>
           </div>
           <div className="flex gap-2">
+            <ThemeColorToggle/>
             <Link href="/login">
               <Button variant="ghost" className="h-8">
                 Sign in

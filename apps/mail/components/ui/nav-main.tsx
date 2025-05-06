@@ -59,6 +59,7 @@ import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 import * as React from 'react';
 import Link from 'next/link';
+import { ThemeColorToggle } from '../theme/theme-color-toggle';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   ref?: React.Ref<SVGSVGElement>;
@@ -283,6 +284,9 @@ export function NavMain({ items }: NavMainProps) {
                     title={item.title}
                   />
                 ))}
+              </div>
+              <div>
+                <ThemeColorToggle />
               </div>
             </SidebarMenuItem>
           </Collapsible>

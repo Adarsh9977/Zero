@@ -886,7 +886,7 @@ export const MailList = memo(({ isCompact }: MailListProps) => {
           disableScope('mail-list');
         }}
       >
-        <ScrollArea hideScrollbar className="hide-scrollbar h-full overflow-auto">
+        <ScrollArea hideScrollbar className="hide-scrollbar bg-primary h-full overflow-auto">
           {isLoading ? (
             <div className="flex h-32 items-center justify-center">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white dark:border-t-transparent" />

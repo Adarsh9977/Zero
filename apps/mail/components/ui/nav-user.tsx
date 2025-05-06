@@ -533,10 +533,10 @@ export function NavUser() {
       {state !== 'collapsed' && (
         <div className="flex items-center justify-between gap-2">
           <div className="my-2 flex flex-col items-start gap-1 space-y-1">
-            <div className="text-[13px] leading-none text-black dark:text-white">
+            <div className="text-[13px] leading-none text-primary dark:text-primary">
               {activeAccount?.name || session.user.name || 'User'}
             </div>
-            <div className="max-w-[150px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
+            <div className="max-w-[150px] overflow-hidden truncate text-xs font-normal leading-none text-primary">
               {activeAccount?.email || session.user.email}
             </div>
           </div>

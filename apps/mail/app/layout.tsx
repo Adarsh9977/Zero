@@ -9,6 +9,8 @@ import type { Viewport } from 'next';
 import { cn } from '@/lib/utils';
 import Script from 'next/script';
 import './globals.css';
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import ThemeDataProvider from '@/providers/theme-data-provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -41,9 +43,19 @@ export default async function RootLayout({ children }: PropsWithChildren) {
         <meta name="x-user-eu-region" content={headers.get('x-user-eu-region') || 'false'} />
       </head>
       <body className={cn(geistSans.variable, geistMono.variable, 'antialiased')}>
-        <ServerProviders>
-          <ClientProviders>{children}</ClientProviders>
-        </ServerProviders>
+      <NextThemesProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ThemeDataProvider>
+            <ServerProviders>
+              <ClientProviders>{children}</ClientProviders>
+            </ServerProviders>
+          </ThemeDataProvider>
+        </NextThemesProvider>
+        
       </body>
     </html>
   );
