@@ -77,12 +77,19 @@ const LabelsList = ({ threadId }: { threadId: string }) => {
   const handleToggleLabel = async (labelId: string) => {
     if (!labelId) return;
     const hasLabel = thread.labels?.map((label) => label.id).includes(labelId);
-    await modifyLabels({
+    const promise = modifyLabels({
       threadId: [threadId],
       addLabels: hasLabel ? [] : [labelId],
       removeLabels: hasLabel ? [labelId] : [],
     });
-    refetch();
+    toast.promise(promise, {
+      loading: hasLabel ? "Removing label..." : "Adding label...",
+      success:  hasLabel ? "Label removed successfully" : "Label added successfully",
+      error:  hasLabel ? "Failed to remove label" : "Failed to add label",
+      finally: async () => {
+        await refetch();
+      },
+    });
   };
 
   return (
@@ -195,14 +202,16 @@ export function ThreadContextMenu({
 
   const handleFavorites = async () => {
     const targets = mail.bulkSelected.length ? mail.bulkSelected : [threadId];
-    if (!isStarred) {
-      toast.success(t('common.actions.addedToFavorites'));
-    } else {
-      toast.success(t('common.actions.removedFromFavorites'));
-    }
-    await toggleStar({ ids: targets });
-    setMail((prev) => ({ ...prev, bulkSelected: [] }));
-    return await Promise.allSettled([refetchThread(), refetch()]);
+    const promise = toggleStar({ ids: targets });
+    toast.promise(promise, {
+      loading: isStarred ? t('common.actions.removingFromFavorites') : t('common.actions.addingToFavorites'),
+      success:  isStarred ? t('common.actions.addedToFavorites') : t('common.actions.removedFromFavorites'),
+      error:  isStarred ? t('common.actions.failedToRemoveFromFavorites') : t('common.actions.failedToAddToFavorites'),
+      finally: async () => {
+        setMail((prev) => ({ ...prev, bulkSelected: [] }));
+        await Promise.allSettled([refetchThread(), refetch()]);
+      },
+    });
   };
 
   const handleReadUnread = () => {
