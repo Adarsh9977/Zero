@@ -39,6 +39,7 @@ export const makeQueryClient = (session: Session | null) =>
           signOut({
             fetchOptions: {
               onSuccess: () => {
+                if (window.location.href.includes('/login')) return;
                 window.location.href = '/login?error=required_scopes_missing';
               },
             },
@@ -65,14 +66,28 @@ export const makeQueryClient = (session: Session | null) =>
     },
   });
 
-let browserQueryClient: QueryClient | undefined = undefined;
+let browserQueryClient = {
+  queryClient: undefined,
+  session: null,
+} as {
+  queryClient: QueryClient | undefined;
+  session: Session | null;
+};
 
 const getQueryClient = (session: Session | null) => {
   if (typeof window === 'undefined') {
     return makeQueryClient(session);
   } else {
-    if (!browserQueryClient) browserQueryClient = makeQueryClient(session);
-    return browserQueryClient;
+    if (
+      !browserQueryClient.queryClient ||
+      !browserQueryClient.session ||
+      browserQueryClient.session.user.id !== session?.user.id ||
+      browserQueryClient.session.connectionId !== session?.connectionId
+    ) {
+      browserQueryClient.queryClient = makeQueryClient(session);
+      browserQueryClient.session = session;
+    }
+    return browserQueryClient.queryClient;
   }
 };
 
@@ -91,8 +106,13 @@ export const trpcClient = createTRPCClient<AppRouter>({
       methodOverride: 'POST',
       fetch: (url, options) =>
         fetch(url, { ...options, credentials: 'include' }).then((res) => {
+          const currentPath = new URL(window.location.href).pathname;
           const redirectPath = res.headers.get('X-Zero-Redirect');
-          if (redirectPath) window.location.href = redirectPath;
+
+          if (!!redirectPath && redirectPath !== currentPath) {
+            window.location.href = redirectPath;
+          }
+
           return res;
         }),
     }),
