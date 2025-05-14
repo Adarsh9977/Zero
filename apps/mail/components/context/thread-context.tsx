@@ -83,8 +83,6 @@ const LabelsList = ({ threadId }: { threadId: string }) => {
       removeLabels: hasLabel ? [labelId] : [],
     });
     toast.promise(promise, {
-      loading: hasLabel ? "Removing label..." : "Adding label...",
-      success:  hasLabel ? "Label removed successfully" : "Label added successfully",
       error:  hasLabel ? "Failed to remove label" : "Failed to add label",
       finally: async () => {
         await refetch();
@@ -211,8 +209,6 @@ export function ThreadContextMenu({
     const targets = mail.bulkSelected.length ? mail.bulkSelected : [threadId];
     const promise = toggleStar({ ids: targets });
     toast.promise(promise, {
-      loading: isStarred ? t('common.actions.removingFromFavorites') : t('common.actions.addingToFavorites'),
-      success:  isStarred ? t('common.actions.addedToFavorites') : t('common.actions.removedFromFavorites'),
       error:  isStarred ? t('common.actions.failedToRemoveFromFavorites') : t('common.actions.failedToAddToFavorites'),
       finally: async () => {
         setMail((prev) => ({ ...prev, bulkSelected: [] }));
