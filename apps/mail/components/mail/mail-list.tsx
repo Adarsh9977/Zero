@@ -316,6 +316,7 @@ const Thread = memo(
     }, [latestMessage?.sender?.name]);
 
     if (!demo && (isLoading || !latestMessage || !getThreadData)) return null;
+    console.log("latestMessage", getThreadData);
 
     const demoContent =
       demo && latestMessage ? (
@@ -547,7 +548,7 @@ const Thread = memo(
                   )}
                 </Avatar>
                 <div className="z-1 relative">
-                  {getThreadData.hasUnread && !isMailSelected && !isFolderSent && !isFolderBin ? (
+                  {getThreadData.hasUnread && !isMailSelected && !isFolderSent ? (
                     <span className="absolute -bottom-[1px] right-0.5 size-2 rounded bg-[#006FFE]" />
                   ) : null}
                 </div>
