@@ -316,7 +316,6 @@ const Thread = memo(
     }, [latestMessage?.sender?.name]);
 
     if (!demo && (isLoading || !latestMessage || !getThreadData)) return null;
-    console.log("latestMessage", getThreadData);
 
     const demoContent =
       demo && latestMessage ? (
