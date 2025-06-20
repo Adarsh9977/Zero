@@ -7,8 +7,6 @@
 
 # Zero
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnizzyabi%2FMail0&env=DATABASE_URL,BETTER_AUTH_SECRET,BETTER_AUTH_URL,BETTER_AUTH_TRUSTED_ORIGINS,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GITHUB_REDIRECT_URI&envDescription=For%20more%20info%20on%20setting%20up%20your%20API%20keys%2C%20checkout%20the%20Readme%20below&envLink=https%3A%2F%2Fgithub.com%2Fnizzyabi%2FMail0%2Fblob%2Fmain%2FREADME.md&project-name=0&repository-name=0&redirect-url=0.email&demo-title=0&demo-description=An%20open%20source%20email%20app&demo-url=0.email)
-
 An Open-Source Gmail Alternative for the Future of Email
 
 ## What is Zero?
@@ -90,6 +88,42 @@ You can set up Zero in two ways:
 
    Visit [http://localhost:3000](http://localhost:3000)
    </details>
+
+<details open>
+<summary><b>Devcontainer Setup</b></summary>
+
+#### Quick Start guide
+
+1. **Clone and Install**
+
+   ```bash
+   # Clone the repository
+   git clone https://github.com/Mail-0/Zero.git
+   cd Zero
+   ```
+
+   Then open the code in devcontainer and install the dependencies:
+
+   ```
+   pnpm install
+
+   # Start the database locally
+   pnpm docker:db:up
+   ```
+
+2. **Set Up Environment**
+
+   - Run `pnpm nizzy env` to setup your environment variables
+   - Run `pnpm nizzy sync` to sync your environment variables and types
+   - Start the database with the provided docker compose setup: `pnpm docker:db:up`
+   - Initialize the database: `pnpm db:push`
+
+3. **Start The App**
+   ```bash
+   pnpm dev
+   ```
+   Visit [http://localhost:3000](http://localhost:3000)
+     </details>
 
 ### Environment Setup
 

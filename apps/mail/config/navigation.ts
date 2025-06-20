@@ -22,9 +22,11 @@ import type { NestedKeyOf, MessageKeys } from 'use-intl';
 import type { IntlMessages } from '@/i18n/config';
 import { MessageSquareIcon } from 'lucide-react';
 
+export type MessageKey = MessageKeys<IntlMessages, NestedKeyOf<IntlMessages>>;
+
 export interface NavItem {
   id?: string;
-  title: string;
+  title: MessageKey | (string & {});
   url: string;
   icon: React.ComponentType<any>;
   badge?: number;
@@ -34,7 +36,6 @@ export interface NavItem {
   target?: string;
   shortcut?: string;
 }
-export type MessageKey = MessageKeys<IntlMessages, NestedKeyOf<IntlMessages>>;
 
 interface NavSection {
   title: string;
@@ -172,6 +173,11 @@ export const navigationConfig: Record<string, NavConfig> = {
             icon: Sheet,
           },
           {
+            title: 'navigation.settings.categories',
+            url: '/settings/categories',
+            icon: Tabs,
+          },
+          {
             title: 'navigation.settings.signatures',
             url: '/settings/signatures',
             icon: MessageSquareIcon,
@@ -218,13 +224,6 @@ export const bottomNavItems = [
   {
     title: '',
     items: [
-      {
-        id: 'feedback',
-        title: 'navigation.sidebar.feedback',
-        url: 'https://feedback.0.email',
-        icon: MessageSquare,
-        target: '_blank',
-      },
       {
         id: 'settings',
         title: 'navigation.sidebar.settings',

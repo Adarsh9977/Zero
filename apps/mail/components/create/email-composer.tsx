@@ -1,52 +1,60 @@
 import {
-  CurvedArrow,
-  MediumStack,
-  ShortStack,
-  LongStack,
-  Smile,
-  X,
-  Sparkles,
-} from '../icons/icons';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Check, Command, Loader, Paperclip, Plus, X as XIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { CurvedArrow, Sparkles, X } from '../icons/icons';
 import { useActiveConnection } from '@/hooks/use-connections';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEmailAliases } from '@/hooks/use-email-aliases';
 import useComposeEditor from '@/hooks/use-compose-editor';
-import { Loader, Check, X as XIcon } from 'lucide-react';
-import { Command, Paperclip, Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useTRPC } from '@/providers/query-provider';
 import { useMutation } from '@tanstack/react-query';
-import { useRef, useState, useEffect } from 'react';
+import { useSettings } from '@/hooks/use-settings';
 import { cn, formatFileSize } from '@/lib/utils';
 import { useThread } from '@/hooks/use-threads';
-import { useHotkeys } from 'react-hotkeys-hook';
-import { useSession } from '@/lib/auth-client';
 import { serializeFiles } from '@/lib/schemas';
 import { Input } from '@/components/ui/input';
 import { EditorContent } from '@tiptap/react';
 import { useForm } from 'react-hook-form';
+import { Button } from '../ui/button';
 import { useQueryState } from 'nuqs';
 import pluralize from 'pluralize';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+type ThreadContent = {
+  from: string;
+  to: string[];
+  body: string;
+  cc?: string[];
+  subject: string;
+}[];
+
 interface EmailComposerProps {
-  threadContent?: {
-    from: string;
-    to: string[];
-    body: string;
-    cc?: string[];
-    subject: string;
-  }[];
   initialTo?: string[];
   initialCc?: string[];
   initialBcc?: string[];
   initialSubject?: string;
   initialMessage?: string;
   initialAttachments?: File[];
+  replyingTo?: string;
   onSendEmail: (data: {
     to: string[];
     cc?: string[];
@@ -54,14 +62,17 @@ interface EmailComposerProps {
     subject: string;
     message: string;
     attachments: File[];
+    fromEmail?: string;
   }) => Promise<void>;
   onClose?: () => void;
   className?: string;
   autofocus?: boolean;
+  settingsLoading?: boolean;
+  editorClassName?: string;
 }
 
 const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
 };
 
@@ -78,7 +89,6 @@ const schema = z.object({
 });
 
 export function EmailComposer({
-  threadContent = [],
   initialTo = [],
   initialCc = [],
   initialBcc = [],
@@ -89,7 +99,12 @@ export function EmailComposer({
   onClose,
   className,
   autofocus = false,
+  settingsLoading = false,
+  replyingTo,
+  editorClassName,
 }: EmailComposerProps) {
+  const { data: aliases } = useEmailAliases();
+  const { data: settings } = useSettings();
   const [showCc, setShowCc] = useState(initialCc.length > 0);
   const [showBcc, setShowBcc] = useState(initialBcc.length > 0);
   const [isLoading, setIsLoading] = useState(false);
@@ -104,9 +119,7 @@ export function EmailComposer({
   const [mode] = useQueryState('mode');
   const [isComposeOpen, setIsComposeOpen] = useQueryState('isComposeOpen');
   const { data: emailData } = useThread(threadId ?? null);
-  const { data: session } = useSession();
-  const [urlDraftId] = useQueryState('draftId');
-  const [draftId, setDraftId] = useState<string | null>(urlDraftId ?? null);
+  const [draftId, setDraftId] = useQueryState('draftId');
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState<string | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
   const [isGeneratingSubject, setIsGeneratingSubject] = useState(false);
@@ -117,6 +130,7 @@ export function EmailComposer({
   const ccWrapperRef = useRef<HTMLDivElement>(null);
   const bccWrapperRef = useRef<HTMLDivElement>(null);
   const { data: activeConnection } = useActiveConnection();
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
 
   // Add this function to handle clicks outside the input fields
   useEffect(() => {
@@ -161,6 +175,11 @@ export function EmailComposer({
       subject: initialSubject,
       message: initialMessage,
       attachments: initialAttachments,
+      fromEmail:
+        settings?.settings?.defaultEmailAlias ||
+        aliases?.find((alias) => alias.primary)?.email ||
+        aliases?.[0]?.email ||
+        '',
     },
   });
 
@@ -172,7 +191,7 @@ export function EmailComposer({
 
     const userEmail = activeConnection.email.toLowerCase();
     const latestEmail = emailData.latest;
-    const senderEmail = latestEmail.sender.email.toLowerCase();
+    const senderEmail = latestEmail.replyTo;
 
     // Reset states
     form.reset();
@@ -197,7 +216,7 @@ export function EmailComposer({
 
       // Add original sender if not current user
       if (senderEmail !== userEmail) {
-        to.push(latestEmail.sender.email);
+        to.push(latestEmail.replyTo || latestEmail.sender.email);
       }
 
       // Add original recipients from To field
@@ -238,12 +257,25 @@ export function EmailComposer({
     // For forward, we start with empty recipients
   }, [mode, emailData?.latest, activeConnection?.email]);
 
+  // keep fromEmail in sync when settings or aliases load afterwards
+  useEffect(() => {
+    const preferred =
+      settings?.settings?.defaultEmailAlias ??
+      aliases?.find((a) => a.primary)?.email ??
+      aliases?.[0]?.email;
+
+    if (preferred && form.getValues('fromEmail') !== preferred) {
+      form.setValue('fromEmail', preferred, { shouldDirty: false });
+    }
+  }, [settings?.settings?.defaultEmailAlias, aliases]);
+
   const { watch, setValue, getValues } = form;
   const toEmails = watch('to');
   const ccEmails = watch('cc');
   const bccEmails = watch('bcc');
   const subjectInput = watch('subject');
   const attachments = watch('attachments');
+  const fromEmail = watch('fromEmail');
 
   const handleAttachment = (files: File[]) => {
     if (files && files.length > 0) {
@@ -288,12 +320,56 @@ export function EmailComposer({
     }
   }, [editor, autofocus]);
 
+  // Prevent browser navigation/refresh when there's unsaved content
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasContent = editor?.getText()?.trim().length > 0;
+      if (hasContent) {
+        e.preventDefault();
+        e.returnValue = ''; // Required for Chrome
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [editor]);
+
+  // Perhaps add `hasUnsavedChanges` to the condition
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const hasContent = editor?.getText()?.trim().length > 0;
+        if (hasContent && !draftId) {
+          e.preventDefault();
+          e.stopPropagation();
+          setShowLeaveConfirmation(true);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true); // Use capture phase
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [editor, draftId]);
+
   const handleSend = async () => {
     try {
       if (isLoading || isSavingDraft) return;
+
+      const values = getValues();
+
+      // Validate recipient field
+      if (!values.to || values.to.length === 0) {
+        toast.error('Recipient is required');
+        return;
+      }
+
       setIsLoading(true);
       setAiGeneratedMessage(null);
-      const values = getValues();
+
       await onSendEmail({
         to: values.to,
         cc: showCc ? values.cc : undefined,
@@ -301,6 +377,7 @@ export function EmailComposer({
         subject: values.subject,
         message: editor.getHTML(),
         attachments: values.attachments || [],
+        fromEmail: values.fromEmail,
       });
       setHasUnsavedChanges(false);
       editor.commands.clearContent(true);
@@ -313,6 +390,29 @@ export function EmailComposer({
       setIsLoading(false);
     }
   };
+
+  const threadContent: ThreadContent = useMemo(() => {
+    if (!emailData) return [];
+    return emailData.messages.map((message) => {
+      return {
+        body: message.decodedBody ?? '',
+        from: message.sender.name ?? message.sender.email,
+        to: message.to.reduce<string[]>((to, recipient) => {
+          if (recipient.name) {
+            to.push(recipient.name);
+          }
+          return to;
+        }, []),
+        cc: message.cc?.reduce<string[]>((cc, recipient) => {
+          if (recipient.name) {
+            cc.push(recipient.name);
+          }
+          return cc;
+        }, []),
+        subject: message.subject,
+      };
+    });
+  }, [emailData]);
 
   const handleAiGenerate = async () => {
     try {
@@ -339,32 +439,22 @@ export function EmailComposer({
     }
   };
 
-  // It needs to be done this way so that react doesn't catch on to the state change
-  // and we can still refresh to get the latest draft for the reply.
-  const setDraftIdQueryParam = (draftId: string | null) => {
-    const url = new URL(window.location.href);
-
-    // mutate only one key
-    draftId == null ? url.searchParams.delete('draftId') : url.searchParams.set('draftId', draftId);
-
-    // keep Next's internal state intact and update its mirrors
-    const nextState = {
-      ...window.history.state, // preserves __NA / _N etc.
-      as: url.pathname + url.search,
-      url: url.pathname + url.search,
-    };
-    setDraftId(draftId);
-    window.history.replaceState(nextState, '', url);
-  };
-
   const saveDraft = async () => {
     const values = getValues();
 
     if (!hasUnsavedChanges) return;
-    console.log('DRAFT HTML', editor.getHTML());
     const messageText = editor.getText();
-    console.log(values, messageText);
+    console.log({
+      messageText,
+      editorText: editor.getText(),
+      initialMessage,
+      editorHTML: editor.getHTML(),
+    });
+
+    if (messageText.trim() === initialMessage.trim()) return;
+    if (editor.getHTML() === initialMessage.trim()) return;
     if (!values.to.length || !values.subject.length || !messageText.length) return;
+    if (aiGeneratedMessage || aiIsLoading || isGeneratingSubject) return;
 
     try {
       setIsSavingDraft(true);
@@ -376,12 +466,14 @@ export function EmailComposer({
         message: editor.getHTML(),
         attachments: await serializeFiles(values.attachments ?? []),
         id: draftId,
+        threadId: threadId ? threadId : null,
+        fromEmail: values.fromEmail ? values.fromEmail : null,
       };
 
       const response = await createDraft(draftData);
 
       if (response?.id && response.id !== draftId) {
-        setDraftIdQueryParam(response.id);
+        setDraftId(response.id);
       }
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -395,17 +487,56 @@ export function EmailComposer({
   };
 
   const handleGenerateSubject = async () => {
-    setIsGeneratingSubject(true);
-    const { subject } = await generateEmailSubject({ message: editor.getText() });
-    setValue('subject', subject);
-    setIsGeneratingSubject(false);
+    try {
+      setIsGeneratingSubject(true);
+      const messageText = editor.getText().trim();
+
+      if (!messageText) {
+        toast.error('Please enter some message content first');
+        return;
+      }
+
+      const { subject } = await generateEmailSubject({ message: messageText });
+      setValue('subject', subject);
+      setHasUnsavedChanges(true);
+    } catch (error) {
+      console.error('Error generating subject:', error);
+      toast.error('Failed to generate subject');
+    } finally {
+      setIsGeneratingSubject(false);
+    }
   };
 
-  useEffect(() => {
-    if (urlDraftId !== draftId) {
-      setDraftId(urlDraftId ?? null);
+  const handleClose = () => {
+    const hasContent = editor?.getText()?.trim().length > 0;
+    if (hasContent) {
+      setShowLeaveConfirmation(true);
+    } else {
+      onClose?.();
     }
-  }, [urlDraftId]);
+  };
+
+  const confirmLeave = () => {
+    setShowLeaveConfirmation(false);
+    onClose?.();
+  };
+
+  const cancelLeave = () => {
+    setShowLeaveConfirmation(false);
+  };
+
+  // Component unmount protection
+  useEffect(() => {
+    return () => {
+      // This cleanup runs when component is about to unmount
+      const hasContent = editor?.getText()?.trim().length > 0;
+      if (hasContent && !showLeaveConfirmation) {
+        // If we have content and haven't shown confirmation, it means
+        // the component is being unmounted unexpectedly
+        console.warn('Email composer unmounting with unsaved content');
+      }
+    };
+  }, [editor, showLeaveConfirmation]);
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
@@ -456,7 +587,7 @@ export function EmailComposer({
         className,
       )}
     >
-      <div className="no-scrollbar max-h-[500px] grow overflow-y-auto dark:bg-[#1A1A1A]">
+      <div className="no-scrollbar dark:bg-panelDark max-h-[500px] grow overflow-y-auto">
         {/* To, Cc, Bcc */}
         <div className="shrink-0 overflow-y-auto border-b border-[#E7E7E7] pb-2 dark:border-[#252525]">
           <div className="flex justify-between px-3 pt-3">
@@ -477,11 +608,11 @@ export function EmailComposer({
                   {toEmails.map((email, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-1 rounded-full border border-[#DBDBDB] px-1 py-0.5 pr-2 dark:border-[#2B2B2B]"
+                      className="flex items-center gap-1 rounded-full border px-1 py-0.5 pr-2"
                     >
                       <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                         <Avatar className="h-5 w-5">
-                          <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold text-[#6D6D6D] dark:bg-[#373737] dark:text-[#9B9B9B]">
+                          <AvatarFallback className="bg-offsetLight text-muted-foreground dark:bg-muted rounded-full text-xs font-bold dark:text-[#9B9B9B]">
                             {email.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -505,6 +636,44 @@ export function EmailComposer({
                     ref={toInputRef}
                     className="h-6 flex-1 bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white"
                     placeholder="Enter email"
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pastedText = e.clipboardData.getData('text');
+                      const emails = pastedText
+                        .split(/[,;\s]+/)
+                        .map((email) => email.trim())
+                        .filter((email) => email.length > 0);
+
+                      const validEmails: string[] = [];
+                      const invalidEmails: string[] = [];
+
+                      emails.forEach((email) => {
+                        if (isValidEmail(email)) {
+                          const emailLower = email.toLowerCase();
+                          if (!toEmails.some((e) => e.toLowerCase() === emailLower)) {
+                            validEmails.push(email);
+                          }
+                        } else {
+                          invalidEmails.push(email);
+                        }
+                      });
+
+                      if (validEmails.length > 0) {
+                        setValue('to', [...toEmails, ...validEmails]);
+                        setHasUnsavedChanges(true);
+                        if (validEmails.length === 1) {
+                          toast.success('Email address added');
+                        } else {
+                          toast.success(`${validEmails.length} email addresses added`);
+                        }
+                      }
+
+                      if (invalidEmails.length > 0) {
+                        toast.error(
+                          `Invalid email ${invalidEmails.length === 1 ? 'address' : 'addresses'}: ${invalidEmails.join(', ')}`,
+                        );
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                         e.preventDefault();
@@ -571,11 +740,11 @@ export function EmailComposer({
                       {toEmails.slice(0, 3).map((email, index) => (
                         <div
                           key={index}
-                          className="flex items-center gap-1 rounded-full border border-[#DBDBDB] px-1 py-0.5 pr-2 dark:border-[#2B2B2B]"
+                          className="flex items-center gap-1 rounded-full border px-1 py-0.5 pr-2"
                         >
                           <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                             <Avatar className="h-5 w-5">
-                              <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold text-[#6D6D6D] dark:bg-[#373737] dark:text-[#9B9B9B]">
+                              <AvatarFallback className="bg-offsetLight text-muted-foreground rounded-full text-xs font-bold dark:bg-[#373737] dark:text-[#9B9B9B]">
                                 {email.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
@@ -625,7 +794,7 @@ export function EmailComposer({
                 <button
                   tabIndex={-1}
                   className="flex h-full items-center gap-2 text-sm font-medium text-[#8C8C8C] hover:text-[#A8A8A8]"
-                  onClick={onClose}
+                  onClick={handleClose}
                 >
                   <X className="h-3.5 w-3.5 fill-[#9A9A9A]" />
                 </button>
@@ -653,11 +822,11 @@ export function EmailComposer({
                     {ccEmails?.map((email, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-1 rounded-full border border-[#DBDBDB] px-2 py-0.5 dark:border-[#2B2B2B]"
+                        className="flex items-center gap-1 rounded-full border px-2 py-0.5"
                       >
                         <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                           <Avatar className="h-5 w-5">
-                            <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold text-[#6D6D6D] dark:bg-[#373737] dark:text-[#9B9B9B]">
+                            <AvatarFallback className="bg-offsetLight text-muted-foreground rounded-full text-xs font-bold dark:bg-[#373737] dark:text-[#9B9B9B]">
                               {email.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -744,11 +913,11 @@ export function EmailComposer({
                         {ccEmails.slice(0, 3).map((email, index) => (
                           <div
                             key={index}
-                            className="flex items-center gap-1 rounded-full border border-[#DBDBDB] px-1 py-0.5 pr-2 dark:border-[#2B2B2B]"
+                            className="flex items-center gap-1 rounded-full border px-1 py-0.5 pr-2"
                           >
                             <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                               <Avatar className="h-5 w-5">
-                                <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold text-[#6D6D6D] dark:bg-[#373737] dark:text-[#9B9B9B]">
+                                <AvatarFallback className="bg-offsetLight text-muted-foreground rounded-full text-xs font-bold dark:bg-[#373737] dark:text-[#9B9B9B]">
                                   {email.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
@@ -799,11 +968,11 @@ export function EmailComposer({
                     {bccEmails?.map((email, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-1 rounded-full border border-[#DBDBDB] px-2 py-0.5 dark:border-[#2B2B2B]"
+                        className="flex items-center gap-1 rounded-full border px-2 py-0.5"
                       >
                         <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                           <Avatar className="h-5 w-5">
-                            <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold text-[#6D6D6D] dark:bg-[#373737] dark:text-[#9B9B9B]">
+                            <AvatarFallback className="bg-offsetLight text-muted-foreground rounded-full text-xs font-bold dark:bg-[#373737] dark:text-[#9B9B9B]">
                               {email.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -890,11 +1059,11 @@ export function EmailComposer({
                         {bccEmails.slice(0, 3).map((email, index) => (
                           <div
                             key={index}
-                            className="flex items-center gap-1 rounded-full border border-[#DBDBDB] px-1 py-0.5 pr-2 dark:border-[#2B2B2B]"
+                            className="flex items-center gap-1 rounded-full border px-1 py-0.5 pr-2"
                           >
                             <span className="flex gap-1 py-0.5 text-sm text-black dark:text-white">
                               <Avatar className="h-5 w-5">
-                                <AvatarFallback className="rounded-full bg-[#F5F5F5] text-xs font-bold text-[#6D6D6D] dark:bg-[#373737] dark:text-[#9B9B9B]">
+                                <AvatarFallback className="bg-offsetLight text-muted-foreground rounded-full text-xs font-bold dark:bg-[#373737] dark:text-[#9B9B9B]">
                                   {email.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
@@ -929,7 +1098,7 @@ export function EmailComposer({
         </div>
 
         {/* Subject */}
-        <div className="flex items-center gap-2 p-3">
+        <div className="flex items-center gap-2 border-b p-3">
           <p className="text-sm font-medium text-[#8C8C8C]">Subject:</p>
           <input
             className="h-4 w-full bg-transparent text-sm font-normal leading-normal text-black placeholder:text-[#797979] focus:outline-none dark:text-white/90"
@@ -940,7 +1109,10 @@ export function EmailComposer({
               setHasUnsavedChanges(true);
             }}
           />
-          <button onClick={handleGenerateSubject} disabled={isLoading || isGeneratingSubject}>
+          <button
+            onClick={handleGenerateSubject}
+            disabled={isLoading || isGeneratingSubject || messageLength < 1}
+          >
             <div className="flex items-center justify-center gap-2.5 pl-0.5">
               <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
                 {isGeneratingSubject ? (
@@ -953,11 +1125,45 @@ export function EmailComposer({
           </button>
         </div>
 
+        {/* From */}
+        {aliases.length > 0 && (
+          <div className="flex items-center gap-2 border-b p-3">
+            <p className="text-sm font-medium text-[#8C8C8C]">From:</p>
+            <Select
+              value={fromEmail || ''}
+              onValueChange={(value) => {
+                setValue('fromEmail', value);
+                setHasUnsavedChanges(true);
+              }}
+            >
+              <SelectTrigger className="h-6 flex-1 border-0 bg-transparent p-0 text-sm font-normal text-black placeholder:text-[#797979] focus:outline-none focus:ring-0 dark:text-white/90">
+                <SelectValue placeholder="Select an email address" />
+              </SelectTrigger>
+              <SelectContent className="z-[99999]">
+                {aliases.map((alias) => (
+                  <SelectItem key={alias.email} value={alias.email}>
+                    <div className="flex flex-row items-center gap-1">
+                      <span className="text-sm">
+                        {alias.name ? `${alias.name} <${alias.email}>` : alias.email}
+                      </span>
+                      {alias.primary && <span className="text-xs text-[#8C8C8C]">Primary</span>}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Message Content */}
         <div className="grow self-stretch overflow-y-auto border-t bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
           <div
+            onClick={() => {
+              editor.commands.focus();
+            }}
             className={cn(
-              'max-h-[300px] min-h-[200px] w-full',
+              `max-h-[300px] min-h-[200px] w-full`,
+              editorClassName,
               aiGeneratedMessage !== null ? 'blur-sm' : '',
             )}
           >
@@ -970,12 +1176,8 @@ export function EmailComposer({
       <div className="inline-flex w-full items-center justify-between self-stretch rounded-b-2xl bg-[#FFFFFF] px-3 py-3 outline-white/5 dark:bg-[#202020]">
         <div className="flex items-center justify-start gap-2">
           <div className="flex items-center justify-start gap-2">
-            <button
-              className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md bg-black pl-1.5 pr-1 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white"
-              onClick={handleSend}
-              disabled={isLoading}
-            >
-              <div className="flex items-center justify-center gap-2.5 pl-0.5">
+            <Button size={'xs'} onClick={handleSend} disabled={isLoading || settingsLoading}>
+              <div className="flex items-center justify-center">
                 <div className="text-center text-sm leading-none text-white dark:text-black">
                   <span>Send </span>
                 </div>
@@ -984,14 +1186,11 @@ export function EmailComposer({
                 <Command className="h-3.5 w-3.5 text-white dark:text-black" />
                 <CurvedArrow className="mt-1.5 h-4 w-4 fill-white dark:fill-black" />
               </div>
-            </button>
-            <button
-              className="flex h-7 items-center gap-0.5 overflow-hidden rounded-md border bg-white/5 px-1.5 shadow-sm hover:bg-white/10 dark:border-none"
-              onClick={() => fileInputRef.current?.click()}
-            >
+            </Button>
+            <Button variant={'secondary'} size={'xs'} onClick={() => fileInputRef.current?.click()}>
               <Plus className="h-3 w-3 fill-[#9A9A9A]" />
               <span className="hidden px-0.5 text-sm md:block">Add</span>
-            </button>
+            </Button>
             <Input
               type="file"
               id="attachment-input"
@@ -1028,7 +1227,7 @@ export function EmailComposer({
                       <h4 className="text-sm font-semibold text-black dark:text-white/90">
                         Attachments
                       </h4>
-                      <p className="text-xs text-[#6D6D6D] dark:text-[#9B9B9B]">
+                      <p className="text-muted-foreground text-xs dark:text-[#9B9B9B]">
                         {pluralize('file', attachments.length, true)}
                       </p>
                     </div>
@@ -1082,7 +1281,7 @@ export function EmailComposer({
                                     </span>
                                   )}
                                 </p>
-                                <p className="text-xs text-[#6D6D6D] dark:text-[#9B9B9B]">
+                                <p className="text-muted-foreground text-xs dark:text-[#9B9B9B]">
                                   {formatFileSize(file.size)}
                                 </p>
                               </div>
@@ -1103,7 +1302,7 @@ export function EmailComposer({
                               className="focus-visible:ring-ring ml-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-transparent hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2"
                               aria-label={`Remove ${file.name}`}
                             >
-                              <XIcon className="h-3.5 w-3.5 text-[#6D6D6D] hover:text-black dark:text-[#9B9B9B] dark:hover:text-white" />
+                              <XIcon className="text-muted-foreground h-3.5 w-3.5 hover:text-black dark:text-[#9B9B9B] dark:hover:text-white" />
                             </button>
                           </div>
                         );
@@ -1139,8 +1338,10 @@ export function EmailComposer({
                 />
               ) : null}
             </AnimatePresence>
-            <button
-              className="flex h-7 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-md border border-[#8B5CF6] pl-1.5 pr-2 dark:bg-[#252525]"
+            <Button
+              size={'xs'}
+              variant={'ghost'}
+              className="border border-[#8B5CF6]"
               onClick={async () => {
                 if (!subjectInput.trim()) {
                   await handleGenerateSubject();
@@ -1148,7 +1349,7 @@ export function EmailComposer({
                 setAiGeneratedMessage(null);
                 await handleAiGenerate();
               }}
-              disabled={isLoading || aiIsLoading}
+              disabled={isLoading || aiIsLoading || messageLength < 1}
             >
               <div className="flex items-center justify-center gap-2.5 pl-0.5">
                 <div className="flex h-5 items-center justify-center gap-1 rounded-sm">
@@ -1162,7 +1363,7 @@ export function EmailComposer({
                   Generate
                 </div>
               </div>
-            </button>
+            </Button>
           </div>
           {/* <Tooltip>
               <TooltipTrigger asChild>
@@ -1197,6 +1398,26 @@ export function EmailComposer({
             </Tooltip> */}
         </div>
       </div>
+
+      <Dialog open={showLeaveConfirmation} onOpenChange={setShowLeaveConfirmation}>
+        <DialogContent showOverlay className="z-[99999] sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Discard message?</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes in your email. Are you sure you want to leave? Your changes
+              will be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={cancelLeave}>
+              Stay
+            </Button>
+            <Button variant="destructive" onClick={confirmLeave}>
+              Leave
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1257,10 +1478,10 @@ const ContentPreview = ({
     initial="initial"
     animate="animate"
     exit="exit"
-    className="dark:bg-subtleBlack absolute bottom-full right-0 z-30 w-[400px] overflow-hidden rounded-xl border bg-white p-1 shadow-md"
+    className="dark:bg-subtleBlack absolute bottom-full right-0 z-30 z-50 w-[400px] overflow-hidden rounded-xl border bg-white p-1 shadow-md"
   >
     <div
-      className="max-h-60 min-h-[150px] overflow-y-auto rounded-md p-1 text-sm"
+      className="max-h-60 min-h-[150px] overflow-auto rounded-md p-1 text-sm"
       style={{
         scrollbarGutter: 'stable',
       }}

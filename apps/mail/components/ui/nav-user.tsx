@@ -20,11 +20,12 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useActiveConnection, useConnections } from '@/hooks/use-connections';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useLocation, useRevalidator, useSearchParams } from 'react-router';
+import { CircleCheck, Danger, OldPhone, ThreeDots } from '../icons/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { CallInboxDialog, SetupInboxDialog } from '../setup-phone';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CircleCheck, Danger, ThreeDots } from '../icons/icons';
-import { useLocation, useSearchParams } from 'react-router';
 import { signOut, useSession } from '@/lib/auth-client';
 import { AddConnectionDialog } from '../connection/add';
 import { useTRPC } from '@/providers/query-provider';
@@ -32,24 +33,17 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useBrainState } from '@/hooks/use-summary';
 import { useThreads } from '@/hooks/use-threads';
 import { useBilling } from '@/hooks/use-billing';
-import { PricingDialog } from './pricing-dialog';
 import { SunIcon } from '../icons/animated/sun';
-import { useLabels } from '@/hooks/use-labels';
 import { clear as idbClear } from 'idb-keyval';
-import { Gauge } from '@/components/ui/gauge';
-import { useStats } from '@/hooks/use-stats';
-import { useNavigate } from 'react-router';
 import { useTranslations } from 'use-intl';
-import { type IConnection } from '@/types';
 import { useTheme } from 'next-themes';
-import { Progress } from './progress';
 import { useQueryState } from 'nuqs';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export function NavUser() {
-  const { data: session, refetch: refetchSession } = useSession();
+  const { data: session, refetch: refetchSession, isPending: isSessionPending } = useSession();
   const { data, refetch: refetchConnections } = useConnections();
   const [isRendered, setIsRendered] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -65,15 +59,16 @@ export function NavUser() {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { data: activeConnection, refetch: refetchActiveConnection } = useActiveConnection();
-  const [{ refetch: refetchThreads }] = useThreads();
+  const { revalidate } = useRevalidator();
+  const [, setPricingDialog] = useQueryState('pricingDialog');
+  const [category] = useQueryState('category', { defaultValue: 'All Mail' });
 
   const getSettingsHref = useCallback(() => {
-    const category = searchParams.get('category');
     const currentPath = category
       ? `${pathname}?category=${encodeURIComponent(category)}`
       : pathname;
     return `/settings/general?from=${encodeURIComponent(currentPath)}`;
-  }, [pathname, searchParams]);
+  }, [pathname, category]);
 
   const handleClearCache = useCallback(async () => {
     queryClient.clear();
@@ -99,6 +94,7 @@ export function NavUser() {
     await setDefaultConnection({ connectionId });
     await refetchActiveConnection();
     await refetchConnections();
+    await revalidate();
     refetchSession();
   };
 
@@ -108,12 +104,11 @@ export function NavUser() {
       success: () => 'Signed out successfully!',
       error: 'Error signing out',
       async finally() {
+        await handleClearCache();
         window.location.href = '/login';
       },
     });
   };
-
-  const { data: brainState, refetch: refetchBrainState } = useBrainState();
 
   const otherConnections = useMemo(() => {
     if (!data || !activeAccount) return [];
@@ -136,7 +131,7 @@ export function NavUser() {
               <DropdownMenuTrigger asChild>
                 <div className="flex cursor-pointer items-center">
                   <div className="relative">
-                    <Avatar className="size-8 rounded-[5px]">
+                    <Avatar className="relative left-0.5 size-7 rounded-[5px]">
                       <AvatarImage
                         className="rounded-[5px]"
                         src={activeAccount?.picture || undefined}
@@ -310,7 +305,7 @@ export function NavUser() {
                   }`}
                 >
                   <div className="relative">
-                    <Avatar className="size-7 rounded-[5px]">
+                    <Avatar className="size-6 rounded-[5px]">
                       <AvatarImage
                         className="rounded-[5px]"
                         src={activeAccount.picture || undefined}
@@ -333,7 +328,7 @@ export function NavUser() {
               ) : (
                 <div className="flex cursor-pointer items-center">
                   <div className="relative">
-                    <div className="bg-muted size-7 animate-pulse rounded-[5px]" />
+                    <div className="bg-muted size-6 animate-pulse rounded-[5px]" />
                   </div>
                 </div>
               )}
@@ -428,22 +423,28 @@ export function NavUser() {
 
               {isPro ? (
                 <AddConnectionDialog>
-                  <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
+                  <button className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] border border-dashed dark:bg-[#262626] dark:text-[#929292]">
                     <Plus className="size-4" />
                   </button>
                 </AddConnectionDialog>
               ) : (
                 <>
-                  <PricingDialog>
-                    <Button className="hover:bg-offsetLight/80 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed bg-transparent px-0 text-black dark:bg-[#262626] dark:text-[#929292]">
-                      <Plus className="size-4" />
-                    </Button>
-                  </PricingDialog>
+                  <Button
+                    onClick={() => setPricingDialog('true')}
+                    className="hover:bg-offsetLight/80 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[5px] border border-dashed bg-transparent px-0 text-black dark:bg-[#262626] dark:text-[#929292]"
+                  >
+                    <Plus className="size-4" />
+                  </Button>
                 </>
               )}
             </div>
 
-            <div>
+            <div className="flex items-center justify-center gap-1">
+              {/* {isSessionPending ? null : !session.user.phoneNumberVerified ? (
+                <SetupInboxDialog />
+              ) : (
+                <CallInboxDialog />
+              )} */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className={cn('md:h-fit md:px-2')}>
@@ -526,25 +527,24 @@ export function NavUser() {
 
       {state !== 'collapsed' && (
         <div className="flex items-center justify-between gap-2">
-          <div className="my-2 flex flex-col items-start gap-1 space-y-1">
+          <div className="mt-[2px] flex flex-col items-start gap-1 space-y-1">
             <div className="flex items-center gap-1 text-[13px] leading-none text-black dark:text-white">
-              <p className="max-w-[8.5ch] truncate text-[13px]">
+              <p className={cn('truncate text-[13px]', isPro ? 'max-w-[14.5ch]' : 'max-w-[8.5ch]')}>
                 {activeAccount?.name || session.user.name || 'User'}
               </p>
               {isPro ? (
                 <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
               ) : (
-                <PricingDialog>
-                  <button className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent">
-                    <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
-                    <span className="text-muted-foreground text-[10px] uppercase">
-                      Get verified
-                    </span>
-                  </button>
-                </PricingDialog>
+                <button
+                  onClick={() => setPricingDialog('true')}
+                  className="flex h-5 items-center gap-1 rounded-full border px-1 pr-1.5 hover:bg-transparent"
+                >
+                  <BadgeCheck className="h-4 w-4 text-white dark:text-[#141414]" fill="#1D9BF0" />
+                  <span className="text-muted-foreground text-[10px] uppercase">Get verified</span>
+                </button>
               )}
             </div>
-            <div className="max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
+            <div className="h-5 max-w-[200px] overflow-hidden truncate text-xs font-normal leading-none text-[#898989]">
               {activeAccount?.email || session.user.email}
             </div>
           </div>

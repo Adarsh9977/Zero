@@ -1,4 +1,19 @@
 import {
+  Archive2,
+  Bell,
+  CurvedArrow,
+  Eye,
+  Lightning,
+  Mail,
+  ScanEye,
+  Star2,
+  Tag,
+  Trash,
+  User,
+  X,
+  Search,
+} from '../icons/icons';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -7,52 +22,45 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Archive2,
-  Bell,
-  CurvedArrow,
-  Eye,
-  Lightning,
-  Mail,
-  Star2,
-  Tag,
-  User,
-  X,
-  Trash,
-  ScanEye,
-  Plus,
-} from '../icons/icons';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { useCategorySettings, useDefaultCategoryId } from '@/hooks/use-categories';
 import { useActiveConnection, useConnections } from '@/hooks/use-connections';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Command, RefreshCcw, Settings2Icon, TrashIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCommandPalette } from '../context/command-palette-context';
+import { useOptimisticActions } from '@/hooks/use-optimistic-actions';
 import { ThreadDisplay } from '@/components/mail/thread-display';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { isMac } from '@/lib/hotkeys/use-hotkey-utils';
 import { MailList } from '@/components/mail/mail-list';
 import { useHotkeysContext } from 'react-hotkeys-hook';
-import { useParams, useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
+import { PricingDialog } from '../ui/pricing-dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import AISidebar from '@/components/ui/ai-sidebar';
+import { Command, RefreshCcw } from 'lucide-react';
 import { cleanSearchValue, cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
 import { useThreads } from '@/hooks/use-threads';
+import { useBilling } from '@/hooks/use-billing';
 import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/lib/auth-client';
 import { ScrollArea } from '../ui/scroll-area';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useStats } from '@/hooks/use-stats';
 import { useTranslations } from 'use-intl';
-import { SearchBar } from './search-bar';
 import { useQueryState } from 'nuqs';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
@@ -104,6 +112,7 @@ const AutoLabelingSettings = () => {
   const { mutateAsync: updateLabels, isPending } = useMutation(
     trpc.brain.updateLabels.mutationOptions(),
   );
+  const [, setPricingDialog] = useQueryState('pricingDialog');
   const [labels, setLabels] = useState<ITag[]>([]);
   const [newLabel, setNewLabel] = useState({ name: '', usecase: '' });
   const { mutateAsync: EnableBrain, isPending: isEnablingBrain } = useMutation(
@@ -113,6 +122,7 @@ const AutoLabelingSettings = () => {
     trpc.brain.disableBrain.mutationOptions(),
   );
   const { data: brainState, refetch: refetchBrainState } = useBrainState();
+  const { isLoading, isPro } = useBilling();
 
   useEffect(() => {
     if (storedLabels) {
@@ -176,7 +186,7 @@ const AutoLabelingSettings = () => {
   };
 
   const handleEnableBrain = useCallback(async () => {
-    toast.promise(EnableBrain({}), {
+    toast.promise(EnableBrain, {
       loading: 'Enabling autolabeling...',
       success: 'Autolabeling enabled successfully',
       error: 'Failed to enable autolabeling',
@@ -187,7 +197,7 @@ const AutoLabelingSettings = () => {
   }, []);
 
   const handleDisableBrain = useCallback(async () => {
-    toast.promise(DisableBrain({}), {
+    toast.promise(DisableBrain, {
       loading: 'Disabling autolabeling...',
       success: 'Autolabeling disabled successfully',
       error: 'Failed to disable autolabeling',
@@ -206,105 +216,157 @@ const AutoLabelingSettings = () => {
   }, [brainState?.enabled]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(state) => {
+        if (!isPro) {
+          setPricingDialog('true');
+        } else {
+          setOpen(state);
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <div className="flex items-center gap-2">
-          {/* <div
-            className={cn(
-              'h-2 w-2 animate-pulse rounded-full',
-              brainState?.enabled ? 'bg-green-400' : 'bg-red-400',
-            )}
-          /> */}
-         
           <Switch
-            disabled={isEnablingBrain || isDisablingBrain}
-            checked={brainState?.enabled}
-           
+            disabled={isEnablingBrain || isDisablingBrain || isLoading}
+            checked={brainState?.enabled ?? false}
           />
-           <span className="text-muted-foreground text-xs cursor-pointer">Auto label</span>
+          <span className="text-muted-foreground cursor-pointer text-xs font-medium">
+            Auto label
+          </span>
         </div>
       </DialogTrigger>
       <DialogContent showOverlay className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Autolabeling Settings</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>Label Settings</DialogTitle>
+            <button
+              onClick={handleToggleAutolabeling}
+              className="bg-offsetLight dark:bg-offsetDark flex items-center gap-2 rounded-lg border px-1.5 py-1"
+            >
+              <span className="text-muted-foreground text-sm">
+                {isEnablingBrain || isDisablingBrain
+                  ? 'Updating...'
+                  : brainState?.enabled
+                    ? 'Disable autolabeling'
+                    : 'Enable autolabeling'}
+              </span>
+              <Switch checked={brainState?.enabled} />
+            </button>
+          </div>
+          <DialogDescription className="mt-2">
+            Configure the labels that Zero uses to automatically organize your emails.
+          </DialogDescription>
         </DialogHeader>
-        <DialogDescription className="mb-4 mt-2">
-          These are the labels Zero uses to autolabel your incoming emails. Feel free to modify them
-          however you like. Zero will create a new label in your account for each label you add - if
-          it does not exist already.
-        </DialogDescription>
+
         <ScrollArea className="h-[400px]">
-          <div className="space-y-2">
-            {labels.map((label) => (
-              <div key={label.id} className="flex items-start gap-2 rounded-lg border p-3">
-                <div className="flex-1 space-y-2">
-                  <input
-                    type="text"
-                    value={label.name}
-                    onChange={(e) => handleUpdateLabel(label.id, 'name', e.target.value)}
-                    className="w-full rounded-md border px-2 py-1 text-sm"
-                    placeholder="Label name"
-                  />
-                  <textarea
+          <div className="space-y-3">
+            {labels.map((label, index) => (
+              <div
+                key={label.id}
+                className="bg-card group relative space-y-2 rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor={`label-name-${index}`}
+                    className="text-muted-foreground text-xs font-medium"
+                  >
+                    Label Name
+                  </Label>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 transition-opacity group-hover:opacity-100"
+                    onClick={() => handleDeleteLabel(label.id)}
+                  >
+                    <Trash className="h-3 w-3 fill-[#F43F5E]" />
+                  </Button>
+                </div>
+                <Input
+                  id={`label-name-${index}`}
+                  type="text"
+                  value={label.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleUpdateLabel(label.id, 'name', e.target.value)
+                  }
+                  className="h-8"
+                  placeholder="e.g., Important, Follow-up, Archive"
+                />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor={`label-usecase-${index}`}
+                    className="text-muted-foreground text-xs font-medium"
+                  >
+                    Use Case Description
+                  </Label>
+                  <Textarea
+                    id={`label-usecase-${index}`}
                     value={label.usecase}
-                    onChange={(e) => handleUpdateLabel(label.id, 'usecase', e.target.value)}
-                    className="w-full rounded-md border px-2 py-1 text-sm"
-                    placeholder="Label use case"
-                    rows={2}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      handleUpdateLabel(label.id, 'usecase', e.target.value)
+                    }
+                    className="min-h-[60px] resize-none"
+                    placeholder="Describe when this label should be applied..."
                   />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleDeleteLabel(label.id)}
-                >
-                  <Trash className="h-4 w-4 fill-[#F43F5E]" />
-                </Button>
               </div>
             ))}
-            <div className="flex items-start gap-2 rounded-lg border p-3">
-              <div className="flex-1 space-y-2">
-                <input
+
+            <div className="bg-muted/50 mt-3 space-y-2 rounded-lg border border-dashed p-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="new-label-name"
+                  className="text-muted-foreground text-xs font-medium"
+                >
+                  New Label Name
+                </Label>
+                <Input
+                  id="new-label-name"
                   type="text"
                   value={newLabel.name}
-                  onChange={(e) => setNewLabel({ ...newLabel, name: e.target.value })}
-                  className="w-full rounded-md border px-2 py-1 text-sm"
-                  placeholder="New label name"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewLabel({ ...newLabel, name: e.target.value })
+                  }
+                  className="h-8 dark:bg-[#141414]"
+                  placeholder="Enter a new label name"
                 />
-                <textarea
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="new-label-usecase"
+                  className="text-muted-foreground text-xs font-medium"
+                >
+                  Use Case Description
+                </Label>
+                <Textarea
+                  id="new-label-usecase"
                   value={newLabel.usecase}
-                  onChange={(e) => setNewLabel({ ...newLabel, usecase: e.target.value })}
-                  className="w-full rounded-md border px-2 py-1 text-sm"
-                  placeholder="New label use case"
-                  rows={2}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setNewLabel({ ...newLabel, usecase: e.target.value })
+                  }
+                  className="min-h-[60px] resize-none dark:bg-[#141414]"
+                  placeholder="Describe when this label should be applied..."
                 />
               </div>
               <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
+                className="mt-2 h-8 w-full"
                 onClick={handleAddLabel}
                 disabled={!newLabel.name || !newLabel.usecase}
               >
-                <Plus className="h-4 w-4 fill-white" />
+                Add New Label
               </Button>
             </div>
           </div>
         </ScrollArea>
         <DialogFooter className="mt-4">
-          <div className="flex w-full justify-between">
-            <Button onClick={handleToggleAutolabeling} variant="outline" size="sm">
-              {brainState?.enabled ? 'Disable' : 'Enable'}
+          <div className="flex w-full justify-end gap-2">
+            <Button size="xs" variant="outline" onClick={handleResetToDefault}>
+              Default Labels
             </Button>
-            <div className="flex gap-2">
-              <Button onClick={handleResetToDefault} variant="outline" size="sm">
-                Use default labels
-              </Button>
-              <Button disabled={isPending} onClick={handleSubmit} size="sm">
-                Save
-              </Button>
-            </div>
+            <Button size="xs" onClick={handleSubmit} disabled={isPending}>
+              Save Changes
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>
@@ -325,6 +387,7 @@ export function MailLayout() {
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
   const { data: activeConnection } = useActiveConnection();
+  const { open, setOpen, activeFilters, clearAllFilters } = useCommandPalette();
 
   const activeAccount = useMemo(() => {
     if (!activeConnection?.id || !connections?.connections) return null;
@@ -344,8 +407,7 @@ export function MailLayout() {
     }
   }, [session?.user, isPending]);
 
-  const [{ isLoading, isFetching, refetch: refetchThreads }] = useThreads();
-  const trpc = useTRPC();
+  const [{ isFetching, refetch: refetchThreads }] = useThreads();
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
   const [threadId, setThreadId] = useQueryState('threadId');
@@ -367,12 +429,16 @@ export function MailLayout() {
       disableScope('mail-list');
     };
   }, [threadId, enableScope, disableScope]);
-  const [, setActiveReplyId] = useQueryState('activeReplyId');
 
-  const handleClose = useCallback(() => {
-    setThreadId(null);
-    setActiveReplyId(null);
-  }, [setThreadId]);
+  const handleMailListMouseEnter = useCallback(() => {
+    enableScope('mail-list');
+  }, [enableScope]);
+
+  const handleMailListMouseLeave = useCallback(() => {
+    disableScope('mail-list');
+  }, [disableScope]);
+
+  const [, setActiveReplyId] = useQueryState('activeReplyId');
 
   // Add mailto protocol handler registration
   useEffect(() => {
@@ -393,29 +459,33 @@ export function MailLayout() {
     }
   }, []);
 
-  const category = useQueryState('category');
+  const defaultCategoryId = useDefaultCategoryId();
+  const [category, setCategory] = useQueryState('category', { defaultValue: defaultCategoryId });
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="rounded-inherit relative z-[5] flex p-0 md:mt-1">
+      <PricingDialog />
+      <div className="rounded-inherit relative z-[5] flex p-0 md:mr-0.5 md:mt-1">
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
           className="rounded-inherit overflow-hidden"
         >
           <ResizablePanel
-            defaultSize={40}
-            minSize={40}
-            maxSize={50}
+            defaultSize={35}
+            minSize={35}
+            maxSize={35}
             className={cn(
-              `bg-panelLight dark:bg-panelDark mb-1 w-fit shadow-sm md:rounded-2xl md:border md:border-[#E7E7E7] lg:flex lg:shadow-sm dark:border-[#252525]`,
+              `bg-panelLight dark:bg-panelDark mb-1 mr-[3px] w-fit shadow-sm md:rounded-2xl lg:flex lg:h-[calc(100dvh-8px)] lg:shadow-sm`,
               isDesktop && threadId && 'hidden lg:block',
             )}
+            onMouseEnter={handleMailListMouseEnter}
+            onMouseLeave={handleMailListMouseLeave}
           >
             <div className="w-full md:h-[calc(100dvh-10px)]">
               <div
                 className={cn(
-                  'sticky top-0 z-[15] flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
+                  'sticky top-0 z-[15] flex items-center justify-between gap-1.5 p-2 px-[20px] transition-colors md:min-h-14',
                 )}
               >
                 <div className="flex w-full items-center justify-between gap-2">
@@ -447,7 +517,8 @@ export function MailLayout() {
                       ) : null}
                     </div>
                     <AutoLabelingSettings />
-                    <div className="dark:bg-iconDark/20 relative h-3 w-0.5 rounded-full bg-[#E7E7E7] ml-2" />{' '}                    <Button
+                    <div className="dark:bg-iconDark/20 relative ml-2 h-3 w-0.5 rounded-full bg-[#E7E7E7]" />{' '}
+                    <Button
                       onClick={() => {
                         refetchThreads();
                       }}
@@ -460,7 +531,58 @@ export function MailLayout() {
                 </div>
               </div>
               <div className="p-2 px-[22px]">
-                <SearchBar />
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'text-muted-foreground relative flex h-8 w-full select-none items-center justify-start overflow-hidden rounded-lg border bg-white pl-2 text-left text-sm font-normal shadow-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 dark:border-none dark:bg-[#141414]',
+                  )}
+                  onClick={() => setOpen(!open)}
+                >
+                  <Search className="fill-[#71717A] dark:fill-[#6F6F6F]" />
+
+                  <span className="hidden truncate pr-20 lg:inline-block">
+                    {activeFilters.length > 0
+                      ? activeFilters.map((f) => f.display).join(', ')
+                      : 'Search & Filter'}
+                  </span>
+                  <span className="inline-block truncate pr-20 lg:hidden">
+                    {activeFilters.length > 0
+                      ? `${activeFilters.length} filter${activeFilters.length > 1 ? 's' : ''}`
+                      : 'Search...'}
+                  </span>
+
+                  <span className="absolute right-[0.1rem] flex items-center gap-1">
+                    {/* {activeFilters.length > 0 && (
+                      <Badge variant="secondary" className="ml-2 h-5 rounded px-1">
+                        {activeFilters.length}
+                      </Badge>
+                    )} */}
+                    {activeFilters.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="my-auto h-5 rounded-xl px-1.5 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearAllFilters();
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                    <kbd className="bg-muted text-md pointer-events-none hidden h-7 select-none flex-row items-center gap-1 rounded-md border-none px-2 font-medium !leading-[0] opacity-100 sm:flex dark:bg-[#262626] dark:text-[#929292]">
+                      <span
+                        className={cn(
+                          'h-min !leading-[0.2]',
+                          isMac ? 'mt-[1px] text-lg' : 'text-sm',
+                        )}
+                      >
+                        {isMac ? '⌘' : 'Ctrl'}{' '}
+                      </span>
+                      <span className="h-min text-sm !leading-[0.2]"> K</span>
+                    </kbd>
+                  </span>
+                </Button>
                 <div className="mt-2">
                   {activeAccount?.providerId === 'google' && folder === 'inbox' && (
                     <CategorySelect isMultiSelectMode={mail.bulkSelected.length > 0} />
@@ -469,30 +591,30 @@ export function MailLayout() {
               </div>
               <div
                 className={cn(
-                  `${category[0] === 'Important' ? 'bg-[#F59E0D]' : category[0] === 'All Mail' ? 'bg-[#006FFE]' : category[0] === 'Personal' ? 'bg-[#39ae4a]' : category[0] === 'Updates' ? 'bg-[#8B5CF6]' : category[0] === 'Promotions' ? 'bg-[#F43F5E]' : category[0] === 'Unread' ? 'bg-[#FF4800]' : 'bg-[#F59E0D]'}`,
+                  `${category === 'Important' ? 'bg-[#F59E0D]' : category === 'All Mail' ? 'bg-[#006FFE]' : category === 'Personal' ? 'bg-[#39ae4a]' : category === 'Updates' ? 'bg-[#8B5CF6]' : category === 'Promotions' ? 'bg-[#F43F5E]' : category === 'Unread' ? 'bg-[#FF4800]' : 'bg-[#F59E0D]'}`,
                   'relative bottom-0.5 z-[5] h-0.5 w-full transition-opacity',
                   isFetching ? 'opacity-100' : 'opacity-0',
                 )}
               />
               <div className="relative z-[1] h-[calc(100dvh-(2px+88px+49px+2px))] overflow-hidden pt-0 md:h-[calc(100dvh-9.8rem)]">
-                <MailList isCompact={true} />
+                <MailList />
               </div>
             </div>
           </ResizablePanel>
 
-          <ResizableHandle className="mr-0.5 hidden opacity-0 md:block" />
+          {/* <ResizableHandle className="mr-0.5 hidden opacity-0 md:block" /> */}
 
           {isDesktop && (
             <ResizablePanel
               className={cn(
-                'bg-panelLight dark:bg-panelDark mb-1 mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm dark:border-[#252525]',
+                'bg-panelLight dark:bg-panelDark mb-1 mr-0.5 w-fit rounded-2xl shadow-sm lg:h-[calc(100dvh-8px)]',
                 // Only show on md screens and larger when there is a threadId
                 !threadId && 'hidden lg:block',
               )}
               defaultSize={30}
               minSize={30}
             >
-              <div className="lg:h-[calc(100dvh-(10px)] relative h-[calc(100dvh-(10px))] flex-1">
+              <div className="relative flex-1">
                 <ThreadDisplay />
               </div>
             </ResizablePanel>
@@ -519,8 +641,6 @@ export function MailLayout() {
 
 function BulkSelectActions() {
   const t = useTranslations();
-  const [errorQty, setErrorQty] = useState(0);
-  const [threadId, setThreadId] = useQueryState('threadId');
   const [isLoading, setIsLoading] = useState(false);
   const [isUnsub, setIsUnsub] = useState(false);
   const [mail, setMail] = useMail();
@@ -528,14 +648,12 @@ function BulkSelectActions() {
   const folder = params?.folder ?? 'inbox';
   const [{ refetch: refetchThreads }] = useThreads();
   const { refetch: refetchStats } = useStats();
-  const trpc = useTRPC();
-  const { mutateAsync: markAsRead } = useMutation(trpc.mail.markAsRead.mutationOptions());
-  const { mutateAsync: markAsImportant } = useMutation(trpc.mail.markAsImportant.mutationOptions());
-  const { mutateAsync: bulkArchive } = useMutation(trpc.mail.bulkArchive.mutationOptions());
-  const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
-  const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
-  const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
-  const queryClient = useQueryClient();
+  const {
+    optimisticMarkAsRead,
+    optimisticToggleStar,
+    optimisticMoveThreadsTo,
+    optimisticDeleteThreads,
+  } = useOptimisticActions();
 
   const handleMassUnsubscribe = async () => {
     setIsLoading(true);
@@ -549,7 +667,6 @@ function BulkSelectActions() {
             if (firstEmail)
               return handleUnsubscribe({ emailData: firstEmail }).catch((e) => {
                 toast.error(e.message ?? 'Unknown error while unsubscribing');
-                setErrorQty((eq) => eq++);
               });
           }
         }),
@@ -568,29 +685,13 @@ function BulkSelectActions() {
     );
   };
 
-  const onMoveSuccess = useCallback(async () => {
-    if (threadId && mail.bulkSelected.includes(threadId)) setThreadId(null);
-    refetchThreads();
-    refetchStats();
-    await Promise.all(
-      mail.bulkSelected.map((threadId) =>
-        queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey({ id: threadId }) }),
-      ),
-    );
-    setMail({ ...mail, bulkSelected: [] });
-  }, [mail, setMail, refetchThreads, refetchStats, threadId, setThreadId]);
-
   return (
     <div className="flex items-center gap-2">
       <button
         className="flex h-8 flex-1 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-3 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
         onClick={() => {
           if (mail.bulkSelected.length === 0) return;
-          toast.promise(markAsRead({ ids: mail.bulkSelected }).then(onMoveSuccess), {
-            loading: 'Marking as read...',
-            success: 'All done! marked as read',
-            error: 'Something went wrong!',
-          });
+          optimisticMarkAsRead(mail.bulkSelected);
         }}
       >
         <div className="relative overflow-visible">
@@ -607,53 +708,7 @@ function BulkSelectActions() {
             className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
             onClick={() => {
               if (mail.bulkSelected.length === 0) return;
-              toast.promise(markAsImportant({ ids: mail.bulkSelected }).then(onMoveSuccess), {
-                loading: 'Marking as important...',
-                success: 'All done! marked as important',
-                error: 'Something went wrong!',
-              });
-            }}
-          >
-            <div className="relative overflow-visible">
-              <Lightning className="fill-[#9D9D9D] dark:fill-[#9D9D9D]" />
-            </div>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{t('common.mail.markAsImportant')}</TooltipContent>
-      </Tooltip>
-
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
-            onClick={() => {
-              if (mail.bulkSelected.length === 0) return;
-              toast.promise(bulkArchive({ ids: mail.bulkSelected }).then(onMoveSuccess), {
-                loading: 'Moving to archive...',
-                success: 'All done! moved to archive',
-                error: 'Something went wrong!',
-              });
-            }}
-          >
-            <div className="relative overflow-visible">
-              <Archive2 className="fill-[#9D9D9D]" />
-            </div>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{t('common.mail.archive')}</TooltipContent>
-      </Tooltip>
-
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
-            onClick={() => {
-              if (mail.bulkSelected.length === 0) return;
-              toast.promise(bulkStar({ ids: mail.bulkSelected }).then(onMoveSuccess), {
-                loading: 'Marking as starred...',
-                success: 'All done! marked as starred',
-                error: 'Something went wrong!',
-              });
+              optimisticToggleStar(mail.bulkSelected, true);
             }}
           >
             <div className="relative overflow-visible">
@@ -662,6 +717,23 @@ function BulkSelectActions() {
           </button>
         </TooltipTrigger>
         <TooltipContent>{t('common.mail.starAll')}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border bg-white px-2 text-sm transition-all duration-300 ease-out hover:bg-gray-100 dark:border-none dark:bg-[#313131] dark:hover:bg-[#313131]/80"
+            onClick={() => {
+              if (mail.bulkSelected.length === 0) return;
+              optimisticMoveThreadsTo(mail.bulkSelected, folder, 'archive');
+            }}
+          >
+            <div className="relative overflow-visible">
+              <Archive2 className="fill-[#9D9D9D]" />
+            </div>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{t('common.mail.archive')}</TooltipContent>
       </Tooltip>
 
       <Dialog onOpenChange={setIsUnsub} open={isUnsub}>
@@ -718,7 +790,7 @@ function BulkSelectActions() {
               disabled={isLoading}
               onClick={handleMassUnsubscribe}
             >
-              {<span>Unsubscribe</span>}{' '}
+              <span>Unsubscribe</span>
               <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
                 <Command className="h-2 w-3 text-white dark:text-[#929292]" />
                 <CurvedArrow className="mt-1.5 h-5 w-3.5 fill-white dark:fill-[#929292]" />
@@ -734,18 +806,7 @@ function BulkSelectActions() {
             className="flex aspect-square h-8 items-center justify-center gap-1 overflow-hidden rounded-md border border-[#FCCDD5] bg-[#FDE4E9] px-2 text-sm transition-all duration-300 ease-out hover:bg-[#FDE4E9]/80 dark:border-[#6E2532] dark:bg-[#411D23] dark:hover:bg-[#313131]/80 hover:dark:bg-[#411D23]/60"
             onClick={() => {
               if (mail.bulkSelected.length === 0) return;
-              toast.promise(
-                new Promise((resolve, reject) => {
-                  mail.bulkSelected.map((id) =>
-                    setBackgroundQueue({ type: 'add', threadId: `thread:${id}` }),
-                  );
-                  return bulkDeleteThread({ ids: mail.bulkSelected }).then(resolve).catch(reject);
-                }).then(onMoveSuccess),
-                {
-                  success: 'All done! moved to bin',
-                  error: 'Something went wrong!',
-                },
-              );
+              optimisticDeleteThreads(mail.bulkSelected, folder);
             }}
           >
             <div className="relative overflow-visible">
@@ -761,79 +822,85 @@ function BulkSelectActions() {
 
 export const Categories = () => {
   const t = useTranslations();
-  const [category] = useQueryState('category', {
-    defaultValue: 'Important',
+  const categorySettings = useCategorySettings();
+  const [activeCategory] = useQueryState('category');
+
+  const categories = categorySettings.map((cat) => {
+    const base = {
+      id: cat.id,
+      name: cat.name || t(`common.mailCategories.${cat.id.toLowerCase().replace(' ', '')}` as any),
+      searchValue: cat.searchValue,
+    } as const;
+
+    // Helper to decide fill colour depending on selection
+    const isSelected = activeCategory === cat.id;
+
+    switch (cat.id) {
+      case 'Important':
+        return {
+          ...base,
+          icon: (
+            <Lightning
+              className={cn('fill-muted-foreground dark:fill-white', isSelected && 'fill-white')}
+            />
+          ),
+        };
+      case 'All Mail':
+        return {
+          ...base,
+          icon: (
+            <Mail
+              className={cn('fill-muted-foreground dark:fill-white', isSelected && 'fill-white')}
+            />
+          ),
+          colors:
+            'border-0 bg-[#006FFE] text-white dark:bg-[#006FFE] dark:text-white dark:hover:bg-[#006FFE]/90',
+        };
+      case 'Personal':
+        return {
+          ...base,
+          icon: (
+            <User
+              className={cn('fill-muted-foreground dark:fill-white', isSelected && 'fill-white')}
+            />
+          ),
+        };
+      case 'Promotions':
+        return {
+          ...base,
+          icon: (
+            <Tag
+              className={cn('fill-muted-foreground dark:fill-white', isSelected && 'fill-white')}
+            />
+          ),
+        };
+      case 'Updates':
+        return {
+          ...base,
+          icon: (
+            <Bell
+              className={cn('fill-muted-foreground dark:fill-white', isSelected && 'fill-white')}
+            />
+          ),
+        };
+      case 'Unread':
+        return {
+          ...base,
+          icon: (
+            <ScanEye
+              className={cn(
+                'fill-muted-foreground h-4 w-4 dark:fill-white',
+                isSelected && 'fill-white',
+              )}
+            />
+          ),
+        };
+      default:
+        return base as any;
+    }
   });
-  return [
-    {
-      id: 'Important',
-      name: t('common.mailCategories.important'),
-      searchValue: 'is:important NOT is:sent NOT is:draft',
-      icon: (
-        <Lightning
-          className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Important' && 'fill-white')}
-        />
-      ),
-    },
-    {
-      id: 'All Mail',
-      name: 'All Mail',
-      searchValue: 'NOT is:draft (is:inbox OR (is:sent AND to:me))',
-      icon: (
-        <Mail
-          className={cn('fill-[#6D6D6D] dark:fill-white', category === 'All Mail' && 'fill-white')}
-        />
-      ),
-      colors:
-        'border-0 bg-[#006FFE] text-white dark:bg-[#006FFE] dark:text-white dark:hover:bg-[#006FFE]/90',
-    },
-    {
-      id: 'Personal',
-      name: t('common.mailCategories.personal'),
-      searchValue: 'is:personal NOT is:sent NOT is:draft',
-      icon: (
-        <User
-          className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Personal' && 'fill-white')}
-        />
-      ),
-    },
-    {
-      id: 'Updates',
-      name: t('common.mailCategories.updates'),
-      searchValue: 'is:updates NOT is:sent NOT is:draft',
-      icon: (
-        <Bell
-          className={cn('fill-[#6D6D6D] dark:fill-white', category === 'Updates' && 'fill-white')}
-        />
-      ),
-    },
-    {
-      id: 'Promotions',
-      name: 'Promotions',
-      searchValue: 'is:promotions NOT is:sent NOT is:draft',
-      icon: (
-        <Tag
-          className={cn(
-            'fill-[#6D6D6D] dark:fill-white',
-            category === 'Promotions' && 'fill-white',
-          )}
-        />
-      ),
-    },
-    {
-      id: 'Unread',
-      name: 'Unread',
-      searchValue: 'is:unread NOT is:sent NOT is:draft',
-      icon: (
-        <ScanEye
-          className={cn(
-            'h-4 w-4 fill-[#6D6D6D] dark:fill-white',
-            category === 'Unread' && 'fill-white',
-          )}
-        />
-      ),
-    },
-  ];
+
+  return categories;
 };
 
 type CategoryType = ReturnType<typeof Categories>[0];
@@ -865,22 +932,106 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
   const categories = Categories();
   const params = useParams<{ folder: string }>();
   const folder = params?.folder ?? 'inbox';
+  const defaultCategoryIdInner = useDefaultCategoryId();
   const [category, setCategory] = useQueryState('category', {
-    defaultValue: 'Important',
+    defaultValue: defaultCategoryIdInner,
   });
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTabElementRef = useRef<HTMLButtonElement>(null);
+  const overlayContainerRef = useRef<HTMLDivElement>(null);
+  const [textSize, setTextSize] = useState<'normal' | 'small' | 'xs' | 'hidden'>('normal');
 
-  // Only show category selection for inbox folder
   if (folder !== 'inbox') return <div className="h-8"></div>;
 
-  // Primary category is always the first one
-  const primaryCategory = categories[0];
-  if (!primaryCategory) return null;
+  useEffect(() => {
+    const checkTextSize = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const containerWidth = container.offsetWidth;
+      const selectedCategory = categories.find((cat) => cat.id === category);
+
+      // Calculate approximate widths needed for different text sizes
+      const baseIconWidth = (categories.length - 1) * 40; // unselected icons + gaps
+      const selectedTextLength = selectedCategory ? selectedCategory.name.length : 10;
+
+      // Estimate width needed for different text sizes
+      const normalTextWidth = selectedTextLength * 8 + 60; // normal text
+      const smallTextWidth = selectedTextLength * 7 + 50; // smaller text
+      const xsTextWidth = selectedTextLength * 6 + 40; // extra small text
+      const minIconWidth = 40; // minimum width for icon-only selected button
+
+      const totalNormal = baseIconWidth + normalTextWidth;
+      const totalSmall = baseIconWidth + smallTextWidth;
+      const totalXs = baseIconWidth + xsTextWidth;
+      const totalIconOnly = baseIconWidth + minIconWidth;
+
+      if (containerWidth >= totalNormal) {
+        setTextSize('normal');
+      } else if (containerWidth >= totalSmall) {
+        setTextSize('small');
+      } else if (containerWidth >= totalXs) {
+        setTextSize('xs');
+      } else if (containerWidth >= totalIconOnly) {
+        setTextSize('hidden'); // Hide text but keep button wide
+      } else {
+        setTextSize('hidden'); // Hide text in very tight spaces
+      }
+    };
+
+    checkTextSize();
+
+    // Use ResizeObserver to handle container size changes
+    const resizeObserver = new ResizeObserver(() => {
+      checkTextSize();
+    });
+
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [category, categories]);
 
   const renderCategoryButton = (cat: CategoryType, isOverlay = false, idx: number) => {
     const isSelected = cat.id === (category || 'Primary');
     const bgColor = getCategoryColor(cat.id);
+
+    // Determine text classes based on current text size
+    const getTextClasses = () => {
+      switch (textSize) {
+        case 'normal':
+          return 'text-sm';
+        case 'small':
+          return 'text-xs';
+        case 'xs':
+          return 'text-[10px]';
+        case 'hidden':
+          return 'text-sm'; // Doesn't matter since text is hidden
+        default:
+          return 'text-sm';
+      }
+    };
+
+    // Determine padding based on text size
+    const getPaddingClasses = () => {
+      switch (textSize) {
+        case 'normal':
+          return 'px-3';
+        case 'small':
+          return 'px-2.5';
+        case 'xs':
+          return 'px-2';
+        case 'hidden':
+          return 'px-2'; // Just enough padding for the icon
+        default:
+          return 'px-3';
+      }
+    };
+
+    const showText = textSize !== 'hidden';
 
     return (
       <Tooltip key={cat.id}>
@@ -896,43 +1047,43 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
               });
             }}
             className={cn(
-              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-md border transition-all duration-300 ease-out dark:border-none',
+              'flex h-8 items-center justify-center gap-1 overflow-hidden rounded-lg border transition-all duration-300 ease-out dark:border-none',
               isSelected
-                ? cn('flex-1 border-none px-3 text-white', bgColor)
+                ? cn('flex-1 border-none text-white', getPaddingClasses(), bgColor)
                 : 'w-8 bg-white hover:bg-gray-100 dark:bg-[#313131] dark:hover:bg-[#313131]/80',
             )}
             tabIndex={isOverlay ? -1 : undefined}
           >
             <div className="relative overflow-visible">{cat.icon}</div>
-            {isSelected && (
+            {isSelected && showText && (
               <div className="flex items-center justify-center gap-2.5 px-0.5">
-                <div className="animate-in fade-in-0 slide-in-from-right-4 justify-start text-sm leading-none text-white duration-300">
+                <div
+                  className={cn('justify-start truncate leading-none text-white', getTextClasses())}
+                >
                   {cat.name}
                 </div>
               </div>
             )}
           </button>
         </TooltipTrigger>
-        {!isSelected && (
-          <TooltipContent side="top" className={`${idx === 0 ? 'ml-4' : ''}`}>
-            <span className="mr-2">{cat.name}</span>
-            <kbd
-              className={cn(
-                'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
-                '-me-1 ms-auto inline-flex max-h-full items-center',
-              )}
-            >
-              {idx + 1}
-            </kbd>
-          </TooltipContent>
-        )}
+        <TooltipContent side="top" className={`${idx === 0 ? 'ml-4' : ''}`}>
+          <span className="mr-2">{cat.name}</span>
+          <kbd
+            className={cn(
+              'border-muted-foreground/10 bg-accent h-6 rounded-[6px] border px-1.5 font-mono text-xs leading-6',
+              '-me-1 ms-auto inline-flex max-h-full items-center',
+            )}
+          >
+            {idx + 1}
+          </kbd>
+        </TooltipContent>
       </Tooltip>
     );
   };
 
   // Update clip path when category changes
   useEffect(() => {
-    const container = containerRef.current;
+    const container = overlayContainerRef.current;
     const activeTabElement = activeTabElementRef.current;
 
     if (category && container && activeTabElement) {
@@ -946,14 +1097,14 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
         container.style.clipPath = `inset(0 ${Number(100 - (clipRight / containerWidth) * 100).toFixed(2)}% 0 ${Number((clipLeft / containerWidth) * 100).toFixed(2)}%)`;
       }
     }
-  }, [category]);
+  }, [category, textSize]); // Changed from showText to textSize
 
   if (isMultiSelectMode) {
     return <BulkSelectActions />;
   }
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full" ref={containerRef}>
       <div className="flex w-full items-start justify-start gap-2">
         {categories.map((cat, idx) => renderCategoryButton(cat, false, idx))}
       </div>
@@ -961,7 +1112,7 @@ function CategorySelect({ isMultiSelectMode }: { isMultiSelectMode: boolean }) {
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 z-10 overflow-hidden transition-[clip-path] duration-300 ease-in-out"
-        ref={containerRef}
+        ref={overlayContainerRef}
       >
         <div className="flex w-full items-start justify-start gap-2">
           {categories.map((cat, idx) => renderCategoryButton(cat, true, idx))}

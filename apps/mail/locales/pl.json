@@ -49,7 +49,14 @@
       "save": "Zapisz",
       "remove": "Usuń",
       "settings": "Ustawienia",
-      "exitSelectionModeEsc": "Kliknij lub naciśnij ESC, aby wyjść z trybu zaznaczania"
+      "exitSelectionModeEsc": "Kliknij lub naciśnij ESC, aby wyjść z trybu zaznaczania",
+      "deleteAllSpam": "Usuń cały spam",
+      "deletingAllSpam": "Usuwanie całego spamu...",
+      "deletedAllSpam": "Usunięto {count} wiadomości spam",
+      "errorDeletingSpam": "Nie udało się usunąć wiadomości spam",
+      "confirmDeleteSpam": "Usuń cały spam",
+      "confirmDeleteSpamDescription": "Czy na pewno chcesz usunąć wszystkie wiadomości spam? Tej akcji nie można cofnąć.",
+      "confirmDelete": "Usuń"
     },
     "themes": {
       "dark": "Ciemny",
@@ -84,7 +91,19 @@
         "goToDocs": "Przejdź do dokumentacji",
         "helpWithShortcuts": "Pomoc ze skrótami",
         "commandPalette": "Paleta poleceń"
-      }
+      },
+      "quickResults": "Szybkie wyniki",
+      "searchPlaceholder": "Szukaj...",
+      "noSearchResults": "Brak wyników wyszukiwania",
+      "actions": "Akcje",
+      "addFilters": "Dodaj filtry",
+      "searchForEmails": "Szukaj e-maili",
+      "filterPlaceholder": "Filtruj...",
+      "noFilterResults": "Brak wyników filtrowania",
+      "availableFilters": "Dostępne filtry",
+      "examples": "Przykłady",
+      "exampleDate": "Przykładowa data",
+      "exampleSender": "Przykładowy nadawca"
     },
     "searchBar": {
       "pickDateRange": "Wybierz datę lub zakres",
@@ -129,7 +148,11 @@
       "updates": "Aktualizacje",
       "promotions": "Promocje",
       "social": "Społecznościowe",
-      "unread": "Nieprzeczytane"
+      "unread": "Nieprzeczytane",
+      "starred": "Oznaczone gwiazdką",
+      "notes": "Notatki",
+      "forums": "Fora",
+      "work": "Praca"
     },
     "replyCompose": {
       "replyTo": "Odpowiedz do",
@@ -146,6 +169,7 @@
       "details": "Szczegóły",
       "from": "Od",
       "to": "Do",
+      "replyTo": "Odpowiedz do",
       "cc": "Dw",
       "bcc": "UDW",
       "date": "Data",
@@ -304,12 +328,21 @@
       "mb": "{amount} MB"
     },
     "labels": {
+      "color": "Kolor",
+      "labelName": "Nazwa etykiety",
+      "createLabel": "Utwórz etykietę",
       "deleteLabel": "Usuń etykietę",
       "deleteLabelConfirm": "Czy na pewno chcesz usunąć tę etykietę?",
       "deleteLabelConfirmDescription": "Tej operacji nie można cofnąć.",
       "deleteLabelConfirmCancel": "Anuluj",
       "deleteLabelConfirmDelete": "Usuń",
-      "deleteLabelSuccess": "Etykieta została pomyślnie usunięta"
+      "deleteLabelSuccess": "Etykieta została pomyślnie usunięta",
+      "failedToDeleteLabel": "Nie udało się usunąć etykiety",
+      "deletingLabel": "Usuwanie etykiety...",
+      "editLabel": "Edytuj etykietę",
+      "savingLabel": "Zapisywanie etykiety...",
+      "failedToSavingLabel": "Nie udało się zapisać etykiety",
+      "saveLabelSuccess": "Etykieta została pomyślnie zapisana"
     }
   },
   "navigation": {
@@ -321,7 +354,8 @@
       "archive": "Archiwum",
       "bin": "Kosz",
       "feedback": "Opinie",
-      "settings": "Ustawienia"
+      "settings": "Ustawienia",
+      "voice": "Asystent głosowy"
     },
     "settings": {
       "general": "Ogólne",
@@ -331,6 +365,7 @@
       "signatures": "Podpisy",
       "shortcuts": "Skróty",
       "labels": "Etykiety",
+      "categories": "Kategorie",
       "dangerZone": "Strefa zagrożenia",
       "deleteAccount": "Usuń konto",
       "privacy": "Prywatność"
@@ -359,7 +394,9 @@
         "customPrompt": "Niestandardowe polecenie dla AI",
         "customPromptPlaceholder": "Wprowadź własne polecenie dla AI...",
         "customPromptDescription": "Dostosuj sposób, w jaki AI pisze odpowiedzi na Twoje e-maile. Zostanie to dodane do podstawowego polecenia.",
-        "noResultsFound": "Nie znaleziono wyników"
+        "noResultsFound": "Nie znaleziono wyników",
+        "zeroSignature": "Podpis Zero",
+        "zeroSignatureDescription": "Dodaj podpis Zero do swoich e-maili."
       },
       "connections": {
         "title": "Połączenia e-mail",
@@ -459,7 +496,15 @@
           "showUpdates": "Pokaż aktualizacje",
           "showPromotions": "Pokaż promocje",
           "showUnread": "Pokaż nieprzeczytane",
-          "selectUnderCursor": "Zaznacz pod kursorem"
+          "selectUnderCursor": "Zaznacz pod kursorem",
+          "openVoice": "Otwórz Asystenta Głosowego",
+          "clearAllFilters": "Wyczyść wszystkie filtry",
+          "markAsImportant": "Oznacz jako ważne",
+          "markAsUnimportant": "Oznacz jako nieważne",
+          "bulkDelete": "Usuń zbiorczo",
+          "bulkSelect": "Zaznacz zbiorczo",
+          "bulkArchive": "Archiwizuj zbiorczo",
+          "bulkStar": "Oznacz gwiazdką zbiorczo"
         }
       },
       "labels": {

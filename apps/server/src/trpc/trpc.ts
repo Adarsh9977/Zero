@@ -1,11 +1,10 @@
-import { connectionToDriver, getActiveConnection } from '../lib/server-utils';
+import { connectionToDriver, getActiveConnection, getZeroDB } from '../lib/server-utils';
 import { Ratelimit, type RatelimitConfig } from '@upstash/ratelimit';
 import type { HonoContext, HonoVariables } from '../ctx';
 import { getConnInfo } from 'hono/cloudflare-workers';
 import { initTRPC, TRPCError } from '@trpc/server';
-import { connection } from '@zero/db/schema';
+import { env } from 'cloudflare:workers';
 import { redis } from '../lib/services';
-import { eq, and } from 'drizzle-orm';
 import type { Context } from 'hono';
 import superjson from 'superjson';
 
@@ -19,13 +18,13 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 export const privateProcedure = publicProcedure.use(async ({ ctx, next }) => {
-  if (!ctx.session?.user) {
+  if (!ctx.sessionUser) {
     throw new TRPCError({
       code: 'UNAUTHORIZED',
     });
   }
 
-  return next({ ctx: { ...ctx, session: ctx.session } });
+  return next({ ctx: { ...ctx, sessionUser: ctx.sessionUser } });
 });
 
 export const activeConnectionProcedure = privateProcedure.use(async ({ ctx, next }) => {
@@ -42,7 +41,7 @@ export const activeConnectionProcedure = privateProcedure.use(async ({ ctx, next
 });
 
 export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx, next }) => {
-  const { activeConnection } = ctx;
+  const { activeConnection, sessionUser } = ctx;
   const driver = connectionToDriver(activeConnection);
   const res = await next({ ctx: { ...ctx, driver } });
 
@@ -57,10 +56,11 @@ export const activeDriverProcedure = activeConnectionProcedure.use(async ({ ctx,
 
   if (!res.ok && res.error.message === 'invalid_grant') {
     // Remove the access token and refresh token
-    await ctx.c.var.db
-      .update(connection)
-      .set({ accessToken: null, refreshToken: null })
-      .where(and(eq(connection.id, activeConnection.id)));
+    const db = getZeroDB(sessionUser.id);
+    await db.updateConnection(activeConnection.id, {
+      accessToken: null,
+      refreshToken: null,
+    });
 
     ctx.c.header(
       'X-Zero-Redirect',

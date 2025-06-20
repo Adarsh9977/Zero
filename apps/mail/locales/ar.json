@@ -49,7 +49,14 @@
       "save": "حفظ",
       "remove": "إزالة",
       "settings": "الإعدادات",
-      "exitSelectionModeEsc": "انقر أو اضغط على ESC للخروج من وضع التحديد"
+      "exitSelectionModeEsc": "انقر أو اضغط على ESC للخروج من وضع التحديد",
+      "deleteAllSpam": "حذف كل الرسائل المزعجة",
+      "deletingAllSpam": "جارٍ حذف كل الرسائل المزعجة...",
+      "deletedAllSpam": "تم حذف {count} من رسائل البريد المزعجة",
+      "errorDeletingSpam": "فشل في حذف رسائل البريد المزعجة",
+      "confirmDeleteSpam": "حذف كل الرسائل المزعجة",
+      "confirmDeleteSpamDescription": "هل أنت متأكد أنك تريد حذف جميع رسائل البريد المزعجة؟ لا يمكن التراجع عن هذا الإجراء.",
+      "confirmDelete": "حذف"
     },
     "themes": {
       "dark": "داكن",
@@ -84,7 +91,19 @@
         "goToDocs": "الذهاب إلى المستندات",
         "helpWithShortcuts": "المساعدة في الاختصارات",
         "commandPalette": "لوحة الأوامر"
-      }
+      },
+      "quickResults": "نتائج سريعة",
+      "searchPlaceholder": "بحث...",
+      "noSearchResults": "لا توجد نتائج بحث",
+      "actions": "الإجراءات",
+      "addFilters": "إضافة عوامل تصفية",
+      "searchForEmails": "البحث عن رسائل البريد الإلكتروني",
+      "filterPlaceholder": "تصفية...",
+      "noFilterResults": "لا توجد نتائج للتصفية",
+      "availableFilters": "عوامل التصفية المتاحة",
+      "examples": "أمثلة",
+      "exampleDate": "مثال على التاريخ",
+      "exampleSender": "مثال على المرسل"
     },
     "searchBar": {
       "pickDateRange": "اختر تاريخًا أو نطاقًا",
@@ -129,7 +148,11 @@
       "updates": "تحديثات",
       "promotions": "عروض",
       "social": "اجتماعي",
-      "unread": "غير مقروءة"
+      "unread": "غير مقروءة",
+      "starred": "المميزة بنجمة",
+      "notes": "الملاحظات",
+      "forums": "المنتديات",
+      "work": "العمل"
     },
     "replyCompose": {
       "replyTo": "الرد على",
@@ -146,6 +169,7 @@
       "details": "التفاصيل",
       "from": "من",
       "to": "إلى",
+      "replyTo": "الرد على",
       "cc": "نسخة",
       "bcc": "نسخة مخفية",
       "date": "التاريخ",
@@ -304,12 +328,21 @@
       "mb": "{amount} ميجابايت"
     },
     "labels": {
+      "color": "اللون",
+      "labelName": "اسم التصنيف",
+      "createLabel": "إنشاء تصنيف",
       "deleteLabel": "حذف التصنيف",
       "deleteLabelConfirm": "هل أنت متأكد من رغبتك في حذف هذا التصنيف؟",
       "deleteLabelConfirmDescription": "لا يمكن التراجع عن هذا الإجراء.",
       "deleteLabelConfirmCancel": "إلغاء",
       "deleteLabelConfirmDelete": "حذف",
-      "deleteLabelSuccess": "تم حذف التصنيف بنجاح"
+      "deleteLabelSuccess": "تم حذف التصنيف بنجاح",
+      "failedToDeleteLabel": "فشل في حذف التصنيف",
+      "deletingLabel": "جارٍ حذف التصنيف...",
+      "editLabel": "تعديل التصنيف",
+      "savingLabel": "جارٍ حفظ التصنيف...",
+      "failedToSavingLabel": "فشل في حفظ التصنيف",
+      "saveLabelSuccess": "تم حفظ التصنيف بنجاح"
     }
   },
   "navigation": {
@@ -321,7 +354,8 @@
       "archive": "الأرشيف",
       "bin": "سلة المحذوفات",
       "feedback": "الملاحظات",
-      "settings": "الإعدادات"
+      "settings": "الإعدادات",
+      "voice": "المساعد الصوتي"
     },
     "settings": {
       "general": "عام",
@@ -331,6 +365,7 @@
       "signatures": "التوقيعات",
       "shortcuts": "الاختصارات",
       "labels": "التصنيفات",
+      "categories": "الفئات",
       "dangerZone": "منطقة الخطر",
       "deleteAccount": "حذف الحساب",
       "privacy": "الخصوصية"
@@ -359,7 +394,9 @@
         "customPrompt": "توجيه الذكاء الاصطناعي المخصص",
         "customPromptPlaceholder": "أدخل توجيهك المخصص للذكاء الاصطناعي...",
         "customPromptDescription": "خصص كيفية كتابة الذكاء الاصطناعي لردود بريدك الإلكتروني. سيتم إضافة هذا إلى التوجيه الأساسي.",
-        "noResultsFound": "لم يتم العثور على نتائج"
+        "noResultsFound": "لم يتم العثور على نتائج",
+        "zeroSignature": "توقيع Zero",
+        "zeroSignatureDescription": "إضافة توقيع Zero إلى رسائل البريد الإلكتروني الخاصة بك."
       },
       "connections": {
         "title": "اتصالات البريد الإلكتروني",
@@ -459,7 +496,15 @@
           "showUpdates": "عرض التحديثات",
           "showPromotions": "عرض العروض",
           "showUnread": "عرض غير المقروء",
-          "selectUnderCursor": "تحديد ما تحت المؤشر"
+          "selectUnderCursor": "تحديد ما تحت المؤشر",
+          "openVoice": "فتح المساعد الصوتي",
+          "clearAllFilters": "مسح جميع عوامل التصفية",
+          "markAsImportant": "تمييز كمهم",
+          "markAsUnimportant": "إلغاء تمييز الأهمية",
+          "bulkDelete": "حذف متعدد",
+          "bulkSelect": "تحديد متعدد",
+          "bulkArchive": "أرشفة متعددة",
+          "bulkStar": "تمييز بنجمة متعدد"
         }
       },
       "labels": {

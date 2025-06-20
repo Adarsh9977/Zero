@@ -6,17 +6,19 @@ import { settingsRouter } from './routes/settings';
 import { getContext } from 'hono/context-storage';
 import { draftsRouter } from './routes/drafts';
 import { labelsRouter } from './routes/label';
-import { brainRouter } from './routes/brain';
 import { notesRouter } from './routes/notes';
-import { mailRouter } from './routes/mail';
+import { brainRouter } from './routes/brain';
 import { userRouter } from './routes/user';
+import { mailRouter } from './routes/mail';
 import type { HonoContext } from '../ctx';
 import { aiRouter } from './routes/ai';
 import { router } from './trpc';
+import { categoriesRouter } from './routes/categories';
 
 export const appRouter = router({
   ai: aiRouter,
   brain: brainRouter,
+  categories: categoriesRouter,
   connections: connectionsRouter,
   cookiePreferences: cookiePreferencesRouter,
   drafts: draftsRouter,
@@ -37,8 +39,7 @@ export const serverTrpc = () => {
   const c = getContext<HonoContext>();
   return appRouter.createCaller({
     c,
-    session: c.var.session,
-    db: c.var.db,
+    sessionUser: c.var.sessionUser,
     auth: c.var.auth,
     autumn: c.var.autumn,
   });

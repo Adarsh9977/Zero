@@ -49,7 +49,14 @@
       "save": "Opslaan",
       "remove": "Verwijderen",
       "settings": "Instellingen",
-      "exitSelectionModeEsc": "Klik of druk op ESC om de selectiemodus te verlaten"
+      "exitSelectionModeEsc": "Klik of druk op ESC om de selectiemodus te verlaten",
+      "deleteAllSpam": "Alle spam verwijderen",
+      "deletingAllSpam": "Alle spam wordt verwijderd...",
+      "deletedAllSpam": "{count} spamberichten verwijderd",
+      "errorDeletingSpam": "Spamberichten verwijderen mislukt",
+      "confirmDeleteSpam": "Alle spam verwijderen",
+      "confirmDeleteSpamDescription": "Weet je zeker dat je alle spamberichten wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "confirmDelete": "Verwijderen"
     },
     "themes": {
       "dark": "Donker",
@@ -84,7 +91,19 @@
         "goToDocs": "Ga naar documentatie",
         "helpWithShortcuts": "Help met sneltoetsen",
         "commandPalette": "Opdrachtenpalet"
-      }
+      },
+      "quickResults": "Snelle resultaten",
+      "searchPlaceholder": "Zoeken...",
+      "noSearchResults": "Geen zoekresultaten",
+      "actions": "Acties",
+      "addFilters": "Filters toevoegen",
+      "searchForEmails": "Zoeken naar e-mails",
+      "filterPlaceholder": "Filter...",
+      "noFilterResults": "Geen filterresultaten",
+      "availableFilters": "Beschikbare filters",
+      "examples": "Voorbeelden",
+      "exampleDate": "Voorbeelddatum",
+      "exampleSender": "Voorbeeldafzender"
     },
     "searchBar": {
       "pickDateRange": "Kies een datum of een periode",
@@ -129,7 +148,11 @@
       "updates": "Updates",
       "promotions": "Promoties",
       "social": "Sociaal",
-      "unread": "Ongelezen"
+      "unread": "Ongelezen",
+      "starred": "Met ster",
+      "notes": "Notities",
+      "forums": "Forums",
+      "work": "Werk"
     },
     "replyCompose": {
       "replyTo": "Antwoorden op",
@@ -146,6 +169,7 @@
       "details": "Details",
       "from": "Van",
       "to": "Aan",
+      "replyTo": "Antwoorden aan",
       "cc": "Cc",
       "bcc": "Bcc",
       "date": "Datum",
@@ -304,12 +328,21 @@
       "mb": "{amount} MB"
     },
     "labels": {
+      "color": "Kleur",
+      "labelName": "Labelnaam",
+      "createLabel": "Label aanmaken",
       "deleteLabel": "Label verwijderen",
       "deleteLabelConfirm": "Weet je zeker dat je dit label wilt verwijderen?",
       "deleteLabelConfirmDescription": "Deze actie kan niet ongedaan worden gemaakt.",
       "deleteLabelConfirmCancel": "Annuleren",
       "deleteLabelConfirmDelete": "Verwijderen",
-      "deleteLabelSuccess": "Label succesvol verwijderd"
+      "deleteLabelSuccess": "Label succesvol verwijderd",
+      "failedToDeleteLabel": "Label verwijderen mislukt",
+      "deletingLabel": "Label verwijderen...",
+      "editLabel": "Label bewerken",
+      "savingLabel": "Label opslaan...",
+      "failedToSavingLabel": "Label opslaan mislukt",
+      "saveLabelSuccess": "Label succesvol opgeslagen"
     }
   },
   "navigation": {
@@ -321,7 +354,8 @@
       "archive": "Archief",
       "bin": "Prullenbak",
       "feedback": "Feedback",
-      "settings": "Instellingen"
+      "settings": "Instellingen",
+      "voice": "Spraakassistent"
     },
     "settings": {
       "general": "Algemeen",
@@ -331,6 +365,7 @@
       "signatures": "Handtekeningen",
       "shortcuts": "Snelkoppelingen",
       "labels": "Labels",
+      "categories": "Categorieën",
       "dangerZone": "Gevarenzone",
       "deleteAccount": "Account verwijderen",
       "privacy": "Privacy"
@@ -359,7 +394,9 @@
         "customPrompt": "Aangepaste AI-prompt",
         "customPromptPlaceholder": "Voer je aangepaste prompt in voor de AI...",
         "customPromptDescription": "Pas aan hoe de AI je e-mailantwoorden schrijft. Dit wordt toegevoegd aan de basisprompt.",
-        "noResultsFound": "Geen resultaten gevonden"
+        "noResultsFound": "Geen resultaten gevonden",
+        "zeroSignature": "Zero-handtekening",
+        "zeroSignatureDescription": "Voeg een Zero-handtekening toe aan je e-mails."
       },
       "connections": {
         "title": "E-mailverbindingen",
@@ -459,7 +496,15 @@
           "showUpdates": "Toon updates",
           "showPromotions": "Toon promoties",
           "showUnread": "Toon ongelezen",
-          "selectUnderCursor": "Selecteer onder cursor"
+          "selectUnderCursor": "Selecteer onder cursor",
+          "openVoice": "Spraakassistent openen",
+          "clearAllFilters": "Alle filters wissen",
+          "markAsImportant": "Markeren als belangrijk",
+          "markAsUnimportant": "Markeren als onbelangrijk",
+          "bulkDelete": "Bulk verwijderen",
+          "bulkSelect": "Bulk selecteren",
+          "bulkArchive": "Bulk archiveren",
+          "bulkStar": "Bulk markeren met ster"
         }
       },
       "labels": {

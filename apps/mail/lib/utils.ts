@@ -2,10 +2,8 @@ import { format, isToday, isThisMonth, differenceInCalendarMonths } from 'date-f
 import { getBrowserTimezone } from './timezones';
 import { formatInTimeZone } from 'date-fns-tz';
 import { MAX_URL_LENGTH } from './constants';
-import { filterSuggestions } from './filter';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import type { JSONContent } from 'novel';
 import type { Sender } from '@/types';
 import LZString from 'lz-string';
 
@@ -250,112 +248,6 @@ export const convertJSONToHTML = (json: any): string => {
   return '';
 };
 
-export const createAIJsonContent = (text: string): JSONContent => {
-  // Try to identify common sign-off patterns with a more comprehensive regex
-  const signOffPatterns = [
-    /\b((?:Best regards|Regards|Sincerely|Thanks|Thank you|Cheers|Best|All the best|Yours truly|Yours sincerely|Kind regards|Cordially)(?:,)?)\s*\n+\s*([A-Za-z][A-Za-z\s.]*)$/i,
-  ];
-
-  let mainContent = text;
-  let signatureLines: string[] = [];
-
-  // Extract sign-off if found
-  for (const pattern of signOffPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      // Find the index where the sign-off starts
-      const signOffIndex = text.lastIndexOf(match[0]);
-      if (signOffIndex > 0) {
-        // Split the content
-        mainContent = text.substring(0, signOffIndex).trim();
-
-        // Split the signature part into separate lines
-        const signature = text.substring(signOffIndex).trim();
-        signatureLines = signature
-          .split(/\n+/)
-          .map((line) => line.trim())
-          .filter(Boolean);
-        break;
-      }
-    }
-  }
-
-  // If no signature was found with regex but there are newlines at the end,
-  // check if the last lines could be a signature
-  if (signatureLines.length === 0) {
-    const allLines = text.split(/\n+/);
-    if (allLines.length > 1) {
-      // Check if last 1-3 lines might be a signature (short lines at the end)
-      const potentialSigLines = allLines
-        .slice(-3)
-        .filter(
-          (line) =>
-            line.trim().length < 60 && !line.trim().endsWith('?') && !line.trim().endsWith('.'),
-        );
-
-      if (potentialSigLines.length > 0) {
-        signatureLines = potentialSigLines;
-        mainContent = allLines
-          .slice(0, allLines.length - potentialSigLines.length)
-          .join('\n')
-          .trim();
-      }
-    }
-  }
-
-  // Split the main content into paragraphs
-  const paragraphs = mainContent
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-
-  if (paragraphs.length === 0 && signatureLines.length === 0) {
-    // If no paragraphs and no signature were found, treat the whole text as one paragraph
-    paragraphs.push(text);
-  }
-
-  // Create a content array with appropriate spacing between paragraphs
-  const content = [];
-
-  paragraphs.forEach((paragraph, index) => {
-    // Add the content paragraph
-    content.push({
-      type: 'paragraph',
-      content: [{ type: 'text', text: paragraph }],
-    });
-
-    // Add an empty paragraph between main paragraphs
-    if (index < paragraphs.length - 1) {
-      content.push({
-        type: 'paragraph',
-      });
-    }
-  });
-
-  // If we found a signature, add it with proper spacing
-  if (signatureLines.length > 0) {
-    // Add spacing before the signature if there was content
-    if (paragraphs.length > 0) {
-      content.push({
-        type: 'paragraph',
-      });
-    }
-
-    // Add each line of the signature as a separate paragraph
-    signatureLines.forEach((line) => {
-      content.push({
-        type: 'paragraph',
-        content: [{ type: 'text', text: line }],
-      });
-    });
-  }
-
-  return {
-    type: 'doc',
-    content: content,
-  };
-};
-
 export const getEmailLogo = (email: string) => {
   if (!import.meta.env.VITE_PUBLIC_IMAGE_API_URL) return '';
   return import.meta.env.VITE_PUBLIC_IMAGE_API_URL + email;
@@ -395,8 +287,33 @@ export const constructReplyBody = (
         <div style="font-size: 12px;">
           On ${originalDate}, ${senderName} ${recipientEmails ? `&lt;${recipientEmails}&gt;` : ''} wrote:
         </div>
-        <div style="">
-          ${quotedMessage || ''}
+      </div>
+    </div>
+  `;
+};
+
+export const constructForwardBody = (
+  formattedMessage: string,
+  originalDate: string,
+  originalSender: Sender | undefined,
+  otherRecipients: Sender[],
+  quotedMessage?: string,
+) => {
+  const senderName = originalSender?.name || originalSender?.email || 'Unknown Sender';
+  const recipientEmails = otherRecipients.map((r) => r.email).join(', ');
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+      <div style="">
+        ${formattedMessage}
+      </div>
+      <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+        <div style="font-size: 12px; color: #64748b; margin-bottom: 10px;">
+          ---------- Forwarded message ----------<br/>
+          From: ${senderName} ${originalSender?.email ? `&lt;${originalSender.email}&gt;` : ''}<br/>
+          Date: ${originalDate}<br/>
+          Subject: ${originalSender?.subject || 'No Subject'}<br/>
+          To: ${recipientEmails || 'No Recipients'}
         </div>
       </div>
     </div>

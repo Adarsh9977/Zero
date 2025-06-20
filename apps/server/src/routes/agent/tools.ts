@@ -1,10 +1,10 @@
-import { connectionToDriver, getActiveConnection } from '../../lib/server-utils';
 import { composeEmail } from '../../trpc/routes/ai/compose';
 import type { MailManager } from '../../lib/driver/types';
+import { perplexity } from '@ai-sdk/perplexity';
 import { colors } from '../../lib/prompts';
 import { env } from 'cloudflare:workers';
+import { generateText, tool } from 'ai';
 import { Tools } from '../../types';
-import { tool } from 'ai';
 import { z } from 'zod';
 
 type ModelTypes = 'summarize' | 'general' | 'chat' | 'vectorize';
@@ -15,71 +15,6 @@ const models: Record<ModelTypes, any> = {
   chat: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
   vectorize: '@cf/baai/bge-large-en-v1.5',
 };
-
-// export class Chat extends AIChatAgent<Env> {
-//   mailManager: MailManager | undefined;
-//   constructor(ctx: DurableObjectState, env: Env) {
-//     super(ctx, env);
-//     this.initialize();
-//   }
-
-//   async initialize() {
-//     if (!this.mailManager) {
-//       const activeConnection = await getActiveConnection();
-//       this.mailManager = connectionToDriver(activeConnection);
-//     }
-//   }
-
-//   async onChatMessage(
-//     onFinish: StreamTextOnFinishCallback<ToolSet>,
-//     options?: { abortSignal?: AbortSignal },
-//   ) {
-//     // const mcpConnection = await this.mcp.connect(
-//     //   "https://path-to-mcp-server/sse"
-//     // );
-
-//     // Collect all tools, including MCP tools
-//     const allTools = {
-//       ...tools,
-//       ...this.mcp.unstable_getAITools(),
-//     };
-
-//     // Create a streaming response that handles both text and tool outputs
-//     const dataStreamResponse = createDataStreamResponse({
-//       execute: async (dataStream) => {
-//         // Process any pending tool calls from previous messages
-//         // This handles human-in-the-loop confirmations for tools
-//         const processedMessages = await processToolCalls({
-//           messages: this.messages,
-//           dataStream,
-//           tools: allTools,
-//           executions: [],
-//         });
-
-//         // Stream the AI response using GPT-4
-//         const result = streamText({
-//           model: openai('gpt-4o'),
-//           system: AiChatPrompt('', '', ''),
-//           messages: processedMessages,
-//           tools: allTools,
-//           onFinish: async (args) => {
-//             onFinish(args as Parameters<StreamTextOnFinishCallback<ToolSet>>[0]);
-//             // await this.mcp.closeConnection(mcpConnection.id);
-//           },
-//           onError: (error) => {
-//             console.error('Error while streaming:', error);
-//           },
-//           maxSteps: 10,
-//         });
-
-//         // Merge the AI response stream with tool execution outputs
-//         result.mergeIntoDataStream(dataStream);
-//       },
-//     });
-
-//     return dataStreamResponse;
-//   }
-// }
 
 export const getEmbeddingVector = async (
   text: string,
@@ -167,11 +102,6 @@ const askZeroThread = (connectionId: string) =>
     },
   });
 
-const getMailManager: () => Promise<MailManager> = async () => {
-  const activeConnection = await getActiveConnection();
-  return connectionToDriver(activeConnection);
-};
-
 const getEmail = (driver: MailManager) =>
   tool({
     description: 'Get a specific email thread by ID',
@@ -194,11 +124,11 @@ const composeEmailTool = (connectionId: string) =>
       threadMessages: z
         .array(
           z.object({
-            from: z.string(),
-            to: z.array(z.string()),
-            cc: z.array(z.string()).optional(),
-            subject: z.string(),
-            body: z.string(),
+            from: z.string().describe('The sender of the email'),
+            to: z.array(z.string()).describe('The recipients of the email'),
+            cc: z.array(z.string()).optional().describe('The CC recipients of the email'),
+            subject: z.string().describe('The subject of the email'),
+            body: z.string().describe('The body of the email'),
           }),
         )
         .optional()
@@ -214,154 +144,26 @@ const composeEmailTool = (connectionId: string) =>
     },
   });
 
-const createEmail = tool({
-  description: 'Create and send a new email',
-  parameters: z.object({
-    to: z.array(
-      z.object({
-        email: z.string(),
-        name: z.string().optional(),
-      }),
-    ),
-    subject: z.string(),
-    message: z.string(),
-    cc: z
-      .array(
-        z.object({
-          email: z.string(),
-          name: z.string().optional(),
-        }),
-      )
-      .optional(),
-    bcc: z
-      .array(
-        z.object({
-          email: z.string(),
-          name: z.string().optional(),
-        }),
-      )
-      .optional(),
-    threadId: z.string().optional(),
-    attachments: z.array(z.any()).optional(),
-    headers: z.record(z.string()).optional(),
-  }),
-});
-
 const listEmails = (driver: MailManager) =>
   tool({
     description: 'List emails in a specific folder',
     parameters: z.object({
-      folder: z.string(),
-      query: z.string().optional(),
-      maxResults: z.number().optional(),
-      labelIds: z.array(z.string()).optional(),
-      pageToken: z.string().optional(),
+      folder: z.string().describe('The folder to list emails from'),
+      query: z.string().optional().describe('The query to filter emails'),
+      maxResults: z.number().optional().describe('The maximum number of results to return'),
+      labelIds: z.array(z.string()).optional().describe('The labels to filter emails'),
+      pageToken: z.string().optional().describe('The page token to continue listing emails'),
     }),
     execute: async (params) => {
       return await driver.list(params);
     },
   });
 
-const _listEmails = (driver: MailManager) =>
-  tool({
-    description: 'Search for emails in the mailbox',
-    parameters: z.object({
-      folder: z.string(),
-      query: z.string().optional(),
-      maxResults: z.number().optional().default(1),
-      labelIds: z.array(z.string()).optional(),
-      pageToken: z.string().optional(),
-    }),
-    execute: async (params) => {
-      const results = await driver.list(params);
-      return await Promise.all(
-        results.threads.map(async (message) => {
-          const thread = await driver.get(message.id);
-          return { ...message, thread };
-        }),
-      );
-    },
-  });
-
-const createDraft = tool({
-  description: 'Create a new email draft',
-  parameters: z.object({
-    to: z.string(),
-    subject: z.string(),
-    message: z.string(),
-    cc: z.string().optional(),
-    bcc: z.string().optional(),
-    id: z.string().nullable(),
-    attachments: z.array(z.any()).optional(),
-  }),
-  execute: async (data) => {
-    const mailManager = await getMailManager();
-    return await mailManager.createDraft(data);
-  },
-});
-
-const writeEmail = tool({
-  description: 'Write a new email',
-  parameters: z.object({
-    to: z.string().optional(),
-    subject: z.string().optional(),
-    message: z.string().optional(),
-  }),
-  execute: async (data) => {},
-});
-
-const sendDraft = tool({
-  description: 'Send an existing draft',
-  parameters: z.object({
-    id: z.string(),
-    data: z.object({
-      to: z.array(
-        z.object({
-          email: z.string(),
-          name: z.string().optional(),
-        }),
-      ),
-      subject: z.string(),
-      message: z.string(),
-      cc: z
-        .array(
-          z.object({
-            email: z.string(),
-            name: z.string().optional(),
-          }),
-        )
-        .optional(),
-      bcc: z
-        .array(
-          z.object({
-            email: z.string(),
-            name: z.string().optional(),
-          }),
-        )
-        .optional(),
-      attachments: z.array(z.any()).optional(),
-      headers: z.record(z.string()).optional(),
-    }),
-  }),
-});
-
-const deleteEmail = tool({
-  description: 'Delete an email',
-  parameters: z.object({
-    id: z.string(),
-  }),
-  execute: async ({ id }) => {
-    const mailManager = await getMailManager();
-    await mailManager.delete(id);
-    return { id, success: true };
-  },
-});
-
 const markAsRead = (driver: MailManager) =>
   tool({
     description: 'Mark emails as read',
     parameters: z.object({
-      threadIds: z.array(z.string()),
+      threadIds: z.array(z.string()).describe('The IDs of the threads to mark as read'),
     }),
     execute: async ({ threadIds }) => {
       await driver.markAsRead(threadIds);
@@ -373,7 +175,7 @@ const markAsUnread = (driver: MailManager) =>
   tool({
     description: 'Mark emails as unread',
     parameters: z.object({
-      threadIds: z.array(z.string()),
+      threadIds: z.array(z.string()).describe('The IDs of the threads to mark as unread'),
     }),
     execute: async ({ threadIds }) => {
       await driver.markAsUnread(threadIds);
@@ -385,10 +187,10 @@ const modifyLabels = (driver: MailManager) =>
   tool({
     description: 'Modify labels on emails',
     parameters: z.object({
-      threadIds: z.array(z.string()),
+      threadIds: z.array(z.string()).describe('The IDs of the threads to modify'),
       options: z.object({
-        addLabels: z.array(z.string()).default([]),
-        removeLabels: z.array(z.string()).default([]),
+        addLabels: z.array(z.string()).default([]).describe('The labels to add'),
+        removeLabels: z.array(z.string()).default([]).describe('The labels to remove'),
       }),
     }),
     execute: async ({ threadIds, options }) => {
@@ -412,31 +214,31 @@ const sendEmail = (driver: MailManager) =>
     parameters: z.object({
       to: z.array(
         z.object({
-          email: z.string(),
-          name: z.string().optional(),
+          email: z.string().describe('The email address of the recipient'),
+          name: z.string().optional().describe('The name of the recipient'),
         }),
       ),
-      subject: z.string(),
-      message: z.string(),
+      subject: z.string().describe('The subject of the email'),
+      message: z.string().describe('The body of the email'),
       cc: z
         .array(
           z.object({
-            email: z.string(),
-            name: z.string().optional(),
+            email: z.string().describe('The email address of the recipient'),
+            name: z.string().optional().describe('The name of the recipient'),
           }),
         )
         .optional(),
       bcc: z
         .array(
           z.object({
-            email: z.string(),
-            name: z.string().optional(),
+            email: z.string().describe('The email address of the recipient'),
+            name: z.string().optional().describe('The name of the recipient'),
           }),
         )
         .optional(),
-      threadId: z.string().optional(),
+      threadId: z.string().optional().describe('The ID of the thread to send the email from'),
       // fromEmail: z.string().optional(),
-      draftId: z.string().optional(),
+      draftId: z.string().optional().describe('The ID of the draft to send'),
     }),
     execute: async (data) => {
       try {
@@ -526,82 +328,48 @@ const deleteLabel = (driver: MailManager) =>
     },
   });
 
-const webSearch = tool({
+export const webSearch = tool({
   description: 'Search the web for information using Perplexity AI',
   parameters: z.object({
     query: z.string().describe('The query to search the web for'),
   }),
   execute: async ({ query }) => {
-    const options = {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        max_tokens: 1024,
-        model: 'sonar',
+    try {
+      const { text } = await generateText({
+        model: perplexity('sonar'),
         messages: [
           { role: 'system', content: 'Be precise and concise.' },
+          { role: 'system', content: 'Do not include sources in your response.' },
+          { role: 'system', content: 'Do not use markdown formatting in your response.' },
           { role: 'user', content: query },
         ],
-      }),
-    };
+        maxTokens: 1024,
+      });
 
-    try {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', options);
-      const data = (await response.json()) as any;
-      return { result: data };
+      return text;
     } catch (error) {
-      console.error('Web search error:', error);
-      throw new Error('Failed to perform web search');
+      console.error('Error searching the web:', error);
+      throw new Error('Failed to search the web');
     }
   },
 });
 
-export const tools = (driver: MailManager, connectionId: string) => ({
-  [Tools.GetThread]: getEmail(driver),
-  [Tools.ComposeEmail]: composeEmailTool(connectionId),
-  [Tools.ListThreads]: listEmails(driver),
-  [Tools.MarkThreadsRead]: markAsRead(driver),
-  [Tools.MarkThreadsUnread]: markAsUnread(driver),
-  [Tools.ModifyLabels]: modifyLabels(driver),
-  [Tools.GetUserLabels]: getUserLabels(driver),
-  [Tools.SendEmail]: sendEmail(driver),
-  [Tools.CreateLabel]: createLabel(driver),
-  [Tools.BulkDelete]: bulkDelete(driver),
-  [Tools.BulkArchive]: bulkArchive(driver),
-  [Tools.DeleteLabel]: deleteLabel(driver),
-  [Tools.AskZeroMailbox]: askZeroMailbox(connectionId),
-  [Tools.AskZeroThread]: askZeroThread(connectionId),
-  [Tools.WebSearch]: webSearch,
-});
-
-export const publicTools = (driver: MailManager, connectionId: string) => ({
-  //   [Tools.GetThread]: getEmail(driver),
-  //   [Tools.ComposeEmail]: composeEmailTool(connectionId),
-  //   [Tools.ListThreads]: listEmails(driver),
-  //   [Tools.MarkThreadsRead]: markAsRead(driver),
-  //   [Tools.MarkThreadsUnread]: markAsUnread(driver),
-  //   [Tools.ModifyLabels]: modifyLabels(driver),
-  //   [Tools.GetUserLabels]: getUserLabels(driver),
-  //   [Tools.SendEmail]: sendEmail(driver),
-  //   [Tools.CreateLabel]: createLabel(driver),
-  //   [Tools.BulkDelete]: bulkDelete(driver),
-  //   [Tools.BulkArchive]: bulkArchive(driver),
-  //   [Tools.DeleteLabel]: deleteLabel(driver),
-  //   [Tools.AskZeroMailbox]: askZeroMailbox(connectionId),
-  //   [Tools.AskZeroThread]: askZeroThread(connectionId),
-  //   [Tools.WebSearch]: webSearch,
-});
-
-// export const executions = {
-//   sendEmail: async (data: IOutgoingMessage) => {
-//     const mailManager = await getMailManager();
-//     return await mailManager.create(data);
-//   },
-//   sendDraft: async (id: string, data: IOutgoingMessage) => {
-//     const mailManager = await getMailManager();
-//     return await mailManager.sendDraft(id, data);
-//   },
-// };
+export const tools = (driver: MailManager, connectionId: string) => {
+  return {
+    [Tools.GetThread]: getEmail(driver),
+    [Tools.ComposeEmail]: composeEmailTool(connectionId),
+    [Tools.ListThreads]: listEmails(driver),
+    [Tools.MarkThreadsRead]: markAsRead(driver),
+    [Tools.MarkThreadsUnread]: markAsUnread(driver),
+    [Tools.ModifyLabels]: modifyLabels(driver),
+    [Tools.GetUserLabels]: getUserLabels(driver),
+    [Tools.SendEmail]: sendEmail(driver),
+    [Tools.CreateLabel]: createLabel(driver),
+    [Tools.BulkDelete]: bulkDelete(driver),
+    [Tools.BulkArchive]: bulkArchive(driver),
+    [Tools.DeleteLabel]: deleteLabel(driver),
+    [Tools.AskZeroMailbox]: askZeroMailbox(connectionId),
+    [Tools.AskZeroThread]: askZeroThread(connectionId),
+    [Tools.WebSearch]: webSearch,
+  };
+};

@@ -6,6 +6,7 @@ export type Label = {
     textColor: string;
   };
   type: string;
+  labels?: Label[];
 };
 
 export interface User {
@@ -54,6 +55,7 @@ export interface SidebarData {
 export interface Sender {
   name?: string;
   email: string;
+  subject?: string;
 }
 
 export interface ParsedMessage {
@@ -80,6 +82,7 @@ export interface ParsedMessage {
   replyTo?: string;
   messageId?: string;
   threadId?: string;
+  isDraft?: boolean;
   attachments?: Attachment[];
 }
 
@@ -105,35 +108,23 @@ export interface MailListProps {
 export type MailSelectMode = 'mass' | 'range' | 'single' | 'selectAllBelow';
 
 export type ThreadProps = {
-  message: { id: string };
-  selectMode: MailSelectMode;
-  // TODO: enforce types instead of sprinkling "any"
+  message: { id: string; historyId?: string | null };
   onClick?: (message: ParsedMessage) => () => void;
-  isCompact?: boolean;
-  folder?: string;
   isKeyboardFocused?: boolean;
-  isInQuickActionMode?: boolean;
-  selectedQuickActionIndex?: number;
-  resetNavigation?: () => void;
-  demoMessage?: ParsedMessage;
 };
-
-export type ConditionalThreadProps = ThreadProps &
-  (
-    | { demo?: true; sessionData?: { userId: string; connectionId: string | null } }
-    | { demo?: false; sessionData: { userId: string; connectionId: string | null } }
-  );
 
 export interface IOutgoingMessage {
   to: Sender[];
-  cc?: Sender[];
-  bcc?: Sender[];
   subject: string;
   message: string;
-  attachments: File[];
-  headers: Record<string, string>;
+  attachments?: File[];
+  headers?: Record<string, string>;
+  cc?: Sender[];
+  bcc?: Sender[];
   threadId?: string;
   fromEmail?: string;
+  isForward?: boolean;
+  originalMessage?: string;
 }
 
 export interface Note {

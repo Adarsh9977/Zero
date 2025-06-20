@@ -5,26 +5,26 @@ import {
   userSettings,
   session,
   userHotkeys,
-} from '@zero/db/schema';
+} from '../db/schema';
+import { createAuthMiddleware, phoneNumber, jwt, bearer } from 'better-auth/plugins';
 import { type Account, betterAuth, type BetterAuthOptions } from 'better-auth';
-import { createAuthMiddleware, customSession } from 'better-auth/plugins';
-import { defaultUserSettings } from '@zero/db/user_settings_default';
 import { getBrowserTimezone, isValidTimezone } from './timezones';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getSocialProviders } from './auth-providers';
+import { redis, resend, twilio } from './services';
 import { getContext } from 'hono/context-storage';
-import { getActiveDriver } from './driver/utils';
+import { defaultUserSettings } from './schemas';
+import { disableBrainFunction } from './brain';
 import { APIError } from 'better-auth/api';
-import { redis, resend } from './services';
+import { getZeroDB } from './server-utils';
+import type { EProviders } from '../types';
 import type { HonoContext } from '../ctx';
 import { env } from 'cloudflare:workers';
 import { createDriver } from './driver';
-import { createDb } from '@zero/db';
 import { eq } from 'drizzle-orm';
+import { createDb } from '../db';
 
 const connectionHandlerHook = async (account: Account) => {
-  const c = getContext<HonoContext>();
-
   if (!account.accessToken || !account.refreshToken) {
     console.error('Missing Access/Refresh Tokens', { account });
     throw new APIError('EXPECTATION_FAILED', { message: 'Missing Access/Refresh Tokens' });
@@ -57,53 +57,96 @@ const connectionHandlerHook = async (account: Account) => {
     expiresAt: new Date(Date.now() + (account.accessTokenExpiresAt?.getTime() || 3600000)),
   };
 
-  await c.var.db
-    .insert(connection)
-    .values({
-      providerId: account.providerId as 'google' | 'microsoft',
-      id: crypto.randomUUID(),
-      email: userInfo.address,
-      userId: account.userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      ...updatingInfo,
-    })
-    .onConflictDoUpdate({
-      target: [connection.email, connection.userId],
-      set: {
-        ...updatingInfo,
-        updatedAt: new Date(),
-      },
+  const db = getZeroDB(account.userId);
+  const [result] = await db.createConnection(
+    account.providerId as EProviders,
+    userInfo.address,
+    account.userId,
+    updatingInfo,
+  );
+
+  if (env.GOOGLE_S_ACCOUNT && env.GOOGLE_S_ACCOUNT !== '{}') {
+    await env.subscribe_queue.send({
+      connectionId: result.id,
+      providerId: account.providerId,
     });
+  }
 };
 
 export const createAuth = () => {
-  const c = getContext<HonoContext>();
+  const twilioClient = twilio();
 
   return betterAuth({
+    plugins: [
+      jwt(),
+      bearer(),
+      phoneNumber({
+        sendOTP: async ({ code, phoneNumber }) => {
+          await twilioClient.messages
+            .send(phoneNumber, `Your verification code is: ${code}, do not share it with anyone.`)
+            .catch((error) => {
+              console.error('Failed to send OTP', error);
+              throw new APIError('INTERNAL_SERVER_ERROR', {
+                message: `Failed to send OTP, ${error.message}`,
+              });
+            });
+        },
+      }),
+    ],
     user: {
       deleteUser: {
         enabled: true,
+        async sendDeleteAccountVerification(data) {
+          const verificationUrl = data.url;
+
+          await resend().emails.send({
+            from: '0.email <no-reply@0.email>',
+            to: data.user.email,
+            subject: 'Delete your 0.email account',
+            html: `
+            <h2>Delete Your 0.email Account</h2>
+            <p>Click the link below to delete your account:</p>
+            <a href="${verificationUrl}">${verificationUrl}</a>
+          `,
+          });
+        },
         beforeDelete: async (user, request) => {
           if (!request) throw new APIError('BAD_REQUEST', { message: 'Request object is missing' });
-          const driver = await getActiveDriver();
-          const refreshToken = (
-            await c.var.db.select().from(connection).where(eq(connection.userId, user.id)).limit(1)
-          )[0]?.refreshToken;
-          const revoked = await driver.revokeRefreshToken(refreshToken || '');
-          if (!revoked) {
-            console.error('Failed to revoke refresh token');
-            return;
+          const db = getZeroDB(user.id);
+          const connections = await db.findManyConnections(user.id);
+
+          const revokedAccounts = (
+            await Promise.allSettled(
+              connections.map(async (connection) => {
+                if (!connection.accessToken || !connection.refreshToken) return false;
+                await disableBrainFunction({
+                  id: connection.id,
+                  providerId: connection.providerId as EProviders,
+                });
+                const driver = createDriver(connection.providerId, {
+                  auth: {
+                    accessToken: connection.accessToken,
+                    refreshToken: connection.refreshToken,
+                    userId: user.id,
+                    email: connection.email,
+                  },
+                });
+                const token = connection.refreshToken;
+                return await driver.revokeToken(token || '');
+              }),
+            )
+          ).map((result) => {
+            if (result.status === 'fulfilled') {
+              return result.value;
+            }
+            return false;
+          });
+
+          if (revokedAccounts.every((value) => !!value)) {
+            console.log('Failed to revoke some accounts');
           }
 
-          await c.var.db.transaction(async (tx) => {
-            await tx.delete(connection).where(eq(connection.userId, user.id));
-            await tx.delete(account).where(eq(account.userId, user.id));
-            await tx.delete(session).where(eq(session.userId, user.id));
-            await tx.delete(userSettings).where(eq(userSettings.userId, user.id));
-            await tx.delete(_user).where(eq(_user.id, user.id));
-            await tx.delete(userHotkeys).where(eq(userHotkeys.userId, user.id));
-          });
+          await db.deleteUser(user.id);
         },
       },
     },
@@ -138,7 +181,7 @@ export const createAuth = () => {
       sendOnSignUp: false,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, token }) => {
-        const verificationUrl = `${c.env.VITE_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/settings/connections`;
+        const verificationUrl = `${env.VITE_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/settings/connections`;
 
         await resend().emails.send({
           from: '0.email <onboarding@0.email>',
@@ -160,11 +203,8 @@ export const createAuth = () => {
           const newSession = ctx.context.newSession;
           if (newSession) {
             // Check if user already has settings
-            const [existingSettings] = await c.var.db
-              .select()
-              .from(userSettings)
-              .where(eq(userSettings.userId, newSession.user.id))
-              .limit(1);
+            const db = getZeroDB(newSession.user.id);
+            const existingSettings = await db.findUserSettings(newSession.user.id);
 
             if (!existingSettings) {
               // get timezone from vercel's header
@@ -175,15 +215,9 @@ export const createAuth = () => {
                   ? headerTimezone
                   : getBrowserTimezone();
               // write default settings against the user
-              await c.var.db.insert(userSettings).values({
-                id: crypto.randomUUID(),
-                userId: newSession.user.id,
-                settings: {
-                  ...defaultUserSettings,
-                  timezone,
-                },
-                createdAt: new Date(),
-                updatedAt: new Date(),
+              await db.insertUserSettings(newSession.user.id, {
+                ...defaultUserSettings,
+                timezone,
               });
             }
           }
@@ -232,10 +266,10 @@ const createAuthConfig = () => {
     session: {
       cookieCache: {
         enabled: true,
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 24 * 30, // 30 days
       },
-      expiresIn: 60 * 60 * 24 * 7, // 7 days
-      updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
+      expiresIn: 60 * 60 * 24 * 30, // 30 days
+      updateAge: 60 * 60 * 24 * 3, // 1 day (every 1 day the session expiration is updated)
     },
     socialProviders: getSocialProviders(env as unknown as Record<string, string>),
     account: {
@@ -244,6 +278,13 @@ const createAuthConfig = () => {
         allowDifferentEmails: true,
         trustedProviders: ['google', 'microsoft'],
       },
+    },
+    onAPIError: {
+      onError: (error, ctx) => {
+        console.error('API Error', error);
+      },
+      errorURL: `${env.VITE_PUBLIC_APP_URL}/login`,
+      throw: true,
     },
   } satisfies BetterAuthOptions;
 };

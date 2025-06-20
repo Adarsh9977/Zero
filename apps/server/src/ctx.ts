@@ -1,12 +1,12 @@
 import type { env } from 'cloudflare:workers';
 import type { Autumn } from 'autumn-js';
 import type { Auth } from './lib/auth';
-import type { DB } from '@zero/db';
+
+export type SessionUser = NonNullable<Awaited<ReturnType<Auth['api']['getSession']>>>['user'];
 
 export type HonoVariables = {
   auth: Auth;
-  session: Awaited<ReturnType<Auth['api']['getSession']>>;
-  db: DB;
+  sessionUser?: SessionUser;
   autumn: Autumn;
 };
 

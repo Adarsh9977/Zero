@@ -50,6 +50,13 @@ checksums:
     common/actions/remove: dba2fe5fe9f83f8078c687f28cba4b52
     common/actions/settings: 8df6777277469c1fd88cc18dde2f1cc3
     common/actions/exitSelectionModeEsc: d03f3886b2796834547610e6ecc4ec42
+    common/actions/deleteAllSpam: 5d147ef6181f7739fbcedd80ce7e112c
+    common/actions/deletingAllSpam: 36af7ca0879a4ad146085a9abfc5bc2d
+    common/actions/deletedAllSpam: fb236045e03760a32081e9e32a5e1e02
+    common/actions/errorDeletingSpam: 72f576d7e4f375b33e208862e4b7d747
+    common/actions/confirmDeleteSpam: 5d147ef6181f7739fbcedd80ce7e112c
+    common/actions/confirmDeleteSpamDescription: 6eb967be0fbd59ef7e2371361f936a04
+    common/actions/confirmDelete: 8bcf303dd10a645b5baacb02b47d72c9
     common/themes/dark: 73e6e208ba628b26e90fcf6dce15e1b2
     common/themes/light: bb78ea2c6edd8662676c81a8a13ecb93
     common/themes/system: 803281c327a02a2feba182f4a2b38311
@@ -69,7 +76,7 @@ checksums:
     common/commandPalette/commands/goToArchive: 0c717740df71d4ddc42b1e90d5a97676
     common/commandPalette/commands/goToBin: 5b567f48c63b3352fc37cd807f6117bf
     common/commandPalette/commands/goToSettings: 6ace3a9c8e0d0bcef02e8835a8e0ac08
-    common/commandPalette/commands/newEmail: 45b7a175e9f4aaf32558ae59dbfa9541
+    common/commandPalette/commands/newEmail: a27757376ab05ff223433ab520a3f489
     common/commandPalette/commands/composeMessage: 45b7a175e9f4aaf32558ae59dbfa9541
     common/commandPalette/commands/searchEmails: cbe4e19fa34208326dd5a5fcc1e7d02e
     common/commandPalette/commands/toggleTheme: 0a3e19fea2f7b1045f53ebf0ccff6bd5
@@ -77,6 +84,18 @@ checksums:
     common/commandPalette/commands/goToDocs: 2c12621537998606d003e6b7a555b31f
     common/commandPalette/commands/helpWithShortcuts: f8b89d2e465e3a93ff9c5397a114a094
     common/commandPalette/commands/commandPalette: 27374fec801ecad6a2a5c58d98c7f531
+    common/commandPalette/quickResults: 7edcae7952feb7fbb89ddb6c774fddcd
+    common/commandPalette/searchPlaceholder: fe877a75eac472fc5b188c135c78a558
+    common/commandPalette/noSearchResults: 622e132be46733cb640c78d62c8041ba
+    common/commandPalette/actions: c46571856723b03262fd33f511116298
+    common/commandPalette/addFilters: 54a0a9e1e7e5f5082186da23ca60c647
+    common/commandPalette/searchForEmails: b148c7fb7b9f7617e02a713aa2428fed
+    common/commandPalette/filterPlaceholder: 6848bf67d2a93045600bb4b63433c284
+    common/commandPalette/noFilterResults: 571653cdc49a158cdf20b068a6a034b4
+    common/commandPalette/availableFilters: 75444f884a2178ce6bd27d5f48ae90d4
+    common/commandPalette/examples: 9dacb7c56bc894e4bcad39f41265e3a0
+    common/commandPalette/exampleDate: 4ec0ed39f59a649c1dba0100a4e9d342
+    common/commandPalette/exampleSender: 9293f425cd783abcef876867406ece5b
     common/searchBar/pickDateRange: 580f254a6831994709cba4a82f082a1a
     common/searchBar/search: 49dd6c21604b5e8d4153ff1aff2177e1
     common/searchBar/clearSearch: 0ee4a80abe134b7edd90c74f03638877
@@ -116,6 +135,10 @@ checksums:
     common/mailCategories/promotions: 046d70330572dc2b24522e3296ebddd6
     common/mailCategories/social: ff80c74b36f0511287404d286ec7976e
     common/mailCategories/unread: 3cc4336d27b43274c0f38350dae2421d
+    common/mailCategories/starred: ffe2e6d743353191e792c494336777f6
+    common/mailCategories/notes: 93c7ef9bc767f51fbe360afcf6b1fecb
+    common/mailCategories/forums: 028ba63a4c8ee444d870c99ae4721f4b
+    common/mailCategories/work: 8511de4788623b09e595581433c410bd
     common/replyCompose/replyTo: e7f83bcc57c1e4248e6835477cd8e28a
     common/replyCompose/thisEmail: 74ce60ea90c3119d506bc9a9f1893a5c
     common/replyCompose/dropFiles: e24aa4f8bf0eb75c7622ee8d5427840f
@@ -128,6 +151,7 @@ checksums:
     common/mailDisplay/details: 2a8bbb1bc386c059783f925aca2cc522
     common/mailDisplay/from: 3d84daca8c92c8609deeab4b294b4afb
     common/mailDisplay/to: 24ef32707b456cff90a91d438df59bbe
+    common/mailDisplay/replyTo: 06ad90a6586a800226eb585a16af4f50
     common/mailDisplay/cc: 3502fdcc26caeb501541c6437fcd4d45
     common/mailDisplay/bcc: 0a8e9f01c54ba0df044f3ad679aa6298
     common/mailDisplay/date: 56f41c5d30a76295bb087b20b7bee4c3
@@ -268,12 +292,21 @@ checksums:
     common/mail/archived: cf5127ecfd7e43a35466a1ba5fe16450
     common/mail/failedToArchive: e844b73a518542027803b7ff97e82b89
     common/units/mb: ed9c3b369a1ac40741b182458b69143a
+    common/labels/color: 9d53d1d120e8b8954bcae9a322573748
+    common/labels/labelName: 682eade7443c047bc680664f821c9e0d
+    common/labels/createLabel: f05ff11324149930de6d986dc627f768
     common/labels/deleteLabel: 2f1a736693311e4dc5bb4ab66f884963
     common/labels/deleteLabelConfirm: 037fbaf1d04356937e6afb574714f51f
     common/labels/deleteLabelConfirmDescription: 3d8b13374ffd3cefc0f3f7ce077bd9c9
     common/labels/deleteLabelConfirmCancel: 2e2a849c2223911717de8caa2c71bade
     common/labels/deleteLabelConfirmDelete: 8bcf303dd10a645b5baacb02b47d72c9
     common/labels/deleteLabelSuccess: a3577fff42d01a7737c8b8dcd0f57b2e
+    common/labels/failedToDeleteLabel: 8ba3381b063f7792f82063779c9f749b
+    common/labels/deletingLabel: 0b6f9a6709a0602cb183985976600dd6
+    common/labels/editLabel: dfe967d8f9d14ba8aa89254f42236097
+    common/labels/savingLabel: 232d4cc013b0bb525899a27f69d1acc8
+    common/labels/failedToSavingLabel: 9d95b12e2d0f164eeb64ad2207c8b702
+    common/labels/saveLabelSuccess: 85d1d32421806260b73c50c1e93623fa
     navigation/sidebar/inbox: 57e9db873911bf848c79e2ed546ecf45
     navigation/sidebar/drafts: 76dab0f0b2e6c4933b80f69e388070d0
     navigation/sidebar/sent: 01b803329590ea067a0e9b41b3193353
@@ -282,6 +315,7 @@ checksums:
     navigation/sidebar/bin: e95691895f3a89d896838716e48290bd
     navigation/sidebar/feedback: 6fac88806e0c269a30777b283988c61c
     navigation/sidebar/settings: 8df6777277469c1fd88cc18dde2f1cc3
+    navigation/sidebar/voice: 81a94ad8770dca9c3cbb5a88329b6a6f
     navigation/settings/general: b891e8f15579fc5d97bcaf3637f5ae59
     navigation/settings/connections: e03a59f742f7b798488a69760bf8a603
     navigation/settings/security: 4b34923fef858a2b9a4a914c3e822889
@@ -289,6 +323,7 @@ checksums:
     navigation/settings/signatures: 681d432cf5709e710da79b9d0155aaa2
     navigation/settings/shortcuts: db3330ed3240c398054f3be23c52851f
     navigation/settings/labels: 6f15627a90002323eac018274b6922d6
+    navigation/settings/categories: fd4e44f3b1b2bba9ca45f3aef963d042
     navigation/settings/dangerZone: ab5417cabdfa70b0a7c9d407ec69b450
     navigation/settings/deleteAccount: f5f7b88ff3122fb0d3a330e2b99d7e3d
     navigation/settings/privacy: 6007d5d5f6591c027b15bd49ab7a8c47
@@ -309,6 +344,8 @@ checksums:
     pages/settings/general/customPromptPlaceholder: cfc2bb3508913d8f3c0b7d2627cf8ba6
     pages/settings/general/customPromptDescription: cc5fa56cc99ace9ef4bbf669cd9cbd45
     pages/settings/general/noResultsFound: 5518f2865757dc73900aa03ef8be6934
+    pages/settings/general/zeroSignature: 0e94e29f00f4b39838ebed8a774148c3
+    pages/settings/general/zeroSignatureDescription: 296c4c81828361128b071969cde8ad76
     pages/settings/connections/title: d7bc733cc82ab74c649a4816373a2295
     pages/settings/connections/description: f05d355994f9fe0e089ce2c54d0de381
     pages/settings/connections/disconnectTitle: efecc2354d665e68492fe985af575508
@@ -398,6 +435,14 @@ checksums:
     pages/settings/shortcuts/actions/showPromotions: 0adf7973051c25739500c0a74f556d68
     pages/settings/shortcuts/actions/showUnread: e53cd61d7e4fe6f1695d02c864909a39
     pages/settings/shortcuts/actions/selectUnderCursor: d4642d66eb27aea7513af1fbb1bd3bb2
+    pages/settings/shortcuts/actions/openVoice: 2714834f0421b991f34a5691b64e3e7f
+    pages/settings/shortcuts/actions/clearAllFilters: 0bc64da95ec15d9bc7fb12cb77f2838a
+    pages/settings/shortcuts/actions/markAsImportant: 769bc967a0b821770be68d7f0bd8fe10
+    pages/settings/shortcuts/actions/markAsUnimportant: cbd2aecd8cfb3abef02f6751af998812
+    pages/settings/shortcuts/actions/bulkDelete: 031d6c108a5e54ede0a8633310d2aff7
+    pages/settings/shortcuts/actions/bulkSelect: 0ea2ec60fc2c2b3ac674ee25dbb9877f
+    pages/settings/shortcuts/actions/bulkArchive: 52af7732715466e200a08108339e1283
+    pages/settings/shortcuts/actions/bulkStar: 07aa74bbf7f2637eb35202c2793745c3
     pages/settings/labels/title: 6f15627a90002323eac018274b6922d6
     pages/settings/labels/description: 0418ef2ed4c3ca5082fddd6686b8596d
     pages/settings/dangerZone/title: ab5417cabdfa70b0a7c9d407ec69b450
@@ -444,6 +489,6 @@ checksums:
     pages/createEmail/editor/menuBar/orderedList: fb2995db78e8fd28b74f8b7e52969c7e
     pages/createEmail/editor/menuBar/viewAttachments: d3750ecafb12686d72305e51a239451c
     pages/createEmail/editor/menuBar/attachFiles: f618d751abb8f97c634df1b19bf52b10
-    errorMessages/required_scopes_missing: 7ea98aac4246a126e266d797bef968e9
+    errorMessages/required_scopes_missing: 5c38faec359df462e422e2178da18852
     errorMessages/early_access_required: 177c31769f58822fd05ac5363b0a560c
     errorMessages/unauthorized: 1fc10fbde54ddc7a8e5989f16f84a86f

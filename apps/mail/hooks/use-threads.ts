@@ -1,12 +1,14 @@
 import { backgroundQueueAtom, isThreadInBackgroundQueueAtom } from '@/store/backgroundQueue';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { IGetThreadResponse } from '../../server/src/lib/driver/types';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useTRPC } from '@/providers/query-provider';
 import { useSession } from '@/lib/auth-client';
 import { useAtom, useAtomValue } from 'jotai';
+import { usePrevious } from './use-previous';
+import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router';
 import { useQueryState } from 'nuqs';
-import { useMemo } from 'react';
 
 export const useThreads = () => {
   const { folder } = useParams<{ folder: string }>();
@@ -33,16 +35,15 @@ export const useThreads = () => {
   );
 
   // Flatten threads from all pages and sort by receivedOn date (newest first)
-  const threads = useMemo(
-    () =>
-      threadsQuery.data
-        ? threadsQuery.data.pages
-            .flatMap((e) => e.threads)
-            .filter(Boolean)
-            .filter((e) => !isInQueue(`thread:${e.id}`))
-        : [],
-    [threadsQuery.data, session, backgroundQueue, isInQueue],
-  );
+
+  const threads = useMemo(() => {
+    return threadsQuery.data
+      ? threadsQuery.data.pages
+          .flatMap((e) => e.threads)
+          .filter(Boolean)
+          .filter((e) => !isInQueue(`thread:${e.id}`))
+      : [];
+  }, [threadsQuery.data, threadsQuery.dataUpdatedAt, isInQueue, backgroundQueue]);
 
   const isEmpty = useMemo(() => threads.length === 0, [threads]);
   const isReachingEnd =
@@ -58,11 +59,19 @@ export const useThreads = () => {
   return [threadsQuery, threads, isReachingEnd, loadMore] as const;
 };
 
-export const useThread = (threadId: string | null) => {
+export const useThread = (threadId: string | null, historyId?: string | null) => {
   const { data: session } = useSession();
   const [_threadId] = useQueryState('threadId');
   const id = threadId ? threadId : _threadId;
   const trpc = useTRPC();
+
+  const previousHistoryId = usePrevious(historyId ?? null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!historyId || !previousHistoryId || historyId === previousHistoryId) return;
+    queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey({ id: id! }) });
+  }, [historyId, previousHistoryId, id]);
 
   const threadQuery = useQuery(
     trpc.mail.get.queryOptions(
@@ -76,6 +85,11 @@ export const useThread = (threadId: string | null) => {
     ),
   );
 
+  const latestDraft = useMemo(() => {
+    if (!threadQuery.data?.latest?.id) return undefined;
+    return threadQuery.data.messages.findLast((e) => e.isDraft);
+  }, [threadQuery]);
+
   const isGroupThread = useMemo(() => {
     if (!threadQuery.data?.latest?.id) return false;
     const totalRecipients = [
@@ -86,5 +100,13 @@ export const useThread = (threadId: string | null) => {
     return totalRecipients > 1;
   }, [threadQuery.data]);
 
-  return { ...threadQuery, isGroupThread };
+  const finalData: IGetThreadResponse | undefined = useMemo(() => {
+    if (!threadQuery.data) return undefined;
+    return {
+      ...threadQuery.data,
+      messages: threadQuery.data?.messages.filter((e) => !e.isDraft),
+    };
+  }, [threadQuery.data]);
+
+  return { ...threadQuery, data: finalData, isGroupThread, latestDraft };
 };

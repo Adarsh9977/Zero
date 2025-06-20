@@ -49,7 +49,14 @@
       "save": "Uložit",
       "remove": "Odstranit",
       "settings": "Nastavení",
-      "exitSelectionModeEsc": "Klikněte nebo stiskněte ESC pro ukončení režimu výběru"
+      "exitSelectionModeEsc": "Klikněte nebo stiskněte ESC pro ukončení režimu výběru",
+      "deleteAllSpam": "Smazat všechny spamy",
+      "deletingAllSpam": "Mazání všech spamů...",
+      "deletedAllSpam": "Smazáno {count} spamových e-mailů",
+      "errorDeletingSpam": "Nepodařilo se smazat spamové e-maily",
+      "confirmDeleteSpam": "Smazat všechny spamy",
+      "confirmDeleteSpamDescription": "Opravdu chcete smazat všechny spamové e-maily? Tuto akci nelze vrátit zpět.",
+      "confirmDelete": "Smazat"
     },
     "themes": {
       "dark": "Tmavé",
@@ -84,7 +91,19 @@
         "goToDocs": "Přejít do dokumentace",
         "helpWithShortcuts": "Nápověda se zkratkami",
         "commandPalette": "Paleta příkazů"
-      }
+      },
+      "quickResults": "Rychlé výsledky",
+      "searchPlaceholder": "Hledat...",
+      "noSearchResults": "Žádné výsledky vyhledávání",
+      "actions": "Akce",
+      "addFilters": "Přidat filtry",
+      "searchForEmails": "Hledat emaily",
+      "filterPlaceholder": "Filtrovat...",
+      "noFilterResults": "Žádné výsledky filtru",
+      "availableFilters": "Dostupné filtry",
+      "examples": "Příklady",
+      "exampleDate": "Příklad data",
+      "exampleSender": "Příklad odesílatele"
     },
     "searchBar": {
       "pickDateRange": "Vyberte datum nebo rozsah",
@@ -129,7 +148,11 @@
       "updates": "Aktualizace",
       "promotions": "Promoakce",
       "social": "Sociální sítě",
-      "unread": "Nepřečtené"
+      "unread": "Nepřečtené",
+      "starred": "Označené hvězdičkou",
+      "notes": "Poznámky",
+      "forums": "Fóra",
+      "work": "Práce"
     },
     "replyCompose": {
       "replyTo": "Odpovědět",
@@ -146,6 +169,7 @@
       "details": "Podrobnosti",
       "from": "Od",
       "to": "Pro",
+      "replyTo": "Odpovědět",
       "cc": "Kopie",
       "bcc": "Skrytá kopie",
       "date": "Datum",
@@ -304,12 +328,21 @@
       "mb": "{amount} MB"
     },
     "labels": {
+      "color": "Barva",
+      "labelName": "Název štítku",
+      "createLabel": "Vytvořit štítek",
       "deleteLabel": "Smazat štítek",
       "deleteLabelConfirm": "Opravdu chcete tento štítek smazat?",
       "deleteLabelConfirmDescription": "Tuto akci nelze vrátit zpět.",
       "deleteLabelConfirmCancel": "Zrušit",
       "deleteLabelConfirmDelete": "Smazat",
-      "deleteLabelSuccess": "Štítek byl úspěšně smazán"
+      "deleteLabelSuccess": "Štítek byl úspěšně smazán",
+      "failedToDeleteLabel": "Nepodařilo se smazat štítek",
+      "deletingLabel": "Mazání štítku...",
+      "editLabel": "Upravit štítek",
+      "savingLabel": "Ukládání štítku...",
+      "failedToSavingLabel": "Nepodařilo se uložit štítek",
+      "saveLabelSuccess": "Štítek byl úspěšně uložen"
     }
   },
   "navigation": {
@@ -321,7 +354,8 @@
       "archive": "Archiv",
       "bin": "Odstraněná pošta",
       "feedback": "Zpětná vazba",
-      "settings": "Nastavení"
+      "settings": "Nastavení",
+      "voice": "Hlasový asistent"
     },
     "settings": {
       "general": "Obecné",
@@ -331,6 +365,7 @@
       "signatures": "Podpisy",
       "shortcuts": "Zástupci",
       "labels": "Štítky",
+      "categories": "Kategorie",
       "dangerZone": "Nebezpečná zóna",
       "deleteAccount": "Smazat účet",
       "privacy": "Soukromí"
@@ -359,7 +394,9 @@
         "customPrompt": "Vlastní AI pokyn",
         "customPromptPlaceholder": "Zadejte vlastní pokyn pro AI...",
         "customPromptDescription": "Přizpůsobte, jak AI píše vaše e-mailové odpovědi. Toto bude přidáno k základnímu pokynu.",
-        "noResultsFound": "Nebyly nalezeny žádné výsledky"
+        "noResultsFound": "Nebyly nalezeny žádné výsledky",
+        "zeroSignature": "Zero podpis",
+        "zeroSignatureDescription": "Přidat Zero podpis k vašim emailům."
       },
       "connections": {
         "title": "Propojení emailu",
@@ -459,7 +496,15 @@
           "showUpdates": "Zobrazit aktualizace",
           "showPromotions": "Zobrazit propagace",
           "showUnread": "Zobrazit nepřečtené",
-          "selectUnderCursor": "Vybrat pod kurzorem"
+          "selectUnderCursor": "Vybrat pod kurzorem",
+          "openVoice": "Otevřít hlasového asistenta",
+          "clearAllFilters": "Vymazat všechny filtry",
+          "markAsImportant": "Označit jako důležité",
+          "markAsUnimportant": "Označit jako nedůležité",
+          "bulkDelete": "Hromadné mazání",
+          "bulkSelect": "Hromadný výběr",
+          "bulkArchive": "Hromadná archivace",
+          "bulkStar": "Hromadné označení hvězdičkou"
         }
       },
       "labels": {

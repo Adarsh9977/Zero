@@ -49,7 +49,14 @@
       "save": "Enregistrer",
       "remove": "Supprimer",
       "settings": "Paramètres",
-      "exitSelectionModeEsc": "Cliquez ou appuyez sur ÉCHAP pour quitter le mode de sélection"
+      "exitSelectionModeEsc": "Cliquez ou appuyez sur ÉCHAP pour quitter le mode de sélection",
+      "deleteAllSpam": "Supprimer tous les spams",
+      "deletingAllSpam": "Suppression de tous les spams...",
+      "deletedAllSpam": "Suppression de {count} emails indésirables",
+      "errorDeletingSpam": "Échec de la suppression des emails indésirables",
+      "confirmDeleteSpam": "Supprimer tous les spams",
+      "confirmDeleteSpamDescription": "Êtes-vous sûr de vouloir supprimer tous les emails indésirables ? Cette action est irréversible.",
+      "confirmDelete": "Supprimer"
     },
     "themes": {
       "dark": "Sombre",
@@ -84,7 +91,19 @@
         "goToDocs": "Voir la documentation",
         "helpWithShortcuts": "Aide sur les raccourcis",
         "commandPalette": "Palette de commandes"
-      }
+      },
+      "quickResults": "Résultats rapides",
+      "searchPlaceholder": "Rechercher...",
+      "noSearchResults": "Aucun résultat de recherche",
+      "actions": "Actions",
+      "addFilters": "Ajouter des filtres",
+      "searchForEmails": "Rechercher des courriels",
+      "filterPlaceholder": "Filtrer...",
+      "noFilterResults": "Aucun résultat de filtre",
+      "availableFilters": "Filtres disponibles",
+      "examples": "Exemples",
+      "exampleDate": "Exemple de date",
+      "exampleSender": "Exemple d'expéditeur"
     },
     "searchBar": {
       "pickDateRange": "Choisir une date ou une plage",
@@ -129,7 +148,11 @@
       "updates": "Mises à jour",
       "promotions": "Promotions",
       "social": "Social",
-      "unread": "Non lu"
+      "unread": "Non lu",
+      "starred": "Favoris",
+      "notes": "Notes",
+      "forums": "Forums",
+      "work": "Travail"
     },
     "replyCompose": {
       "replyTo": "Répondre à",
@@ -146,6 +169,7 @@
       "details": "Détails",
       "from": "De",
       "to": "À",
+      "replyTo": "Répondre à",
       "cc": "Cc",
       "bcc": "Cci",
       "date": "Date",
@@ -304,12 +328,21 @@
       "mb": "{amount} Mo"
     },
     "labels": {
+      "color": "Couleur",
+      "labelName": "Nom de l'étiquette",
+      "createLabel": "Créer une étiquette",
       "deleteLabel": "Supprimer l'étiquette",
       "deleteLabelConfirm": "Êtes-vous sûr de vouloir supprimer cette étiquette ?",
       "deleteLabelConfirmDescription": "Cette action ne peut pas être annulée.",
       "deleteLabelConfirmCancel": "Annuler",
       "deleteLabelConfirmDelete": "Supprimer",
-      "deleteLabelSuccess": "Étiquette supprimée avec succès"
+      "deleteLabelSuccess": "Étiquette supprimée avec succès",
+      "failedToDeleteLabel": "Échec de la suppression de l'étiquette",
+      "deletingLabel": "Suppression de l'étiquette...",
+      "editLabel": "Modifier l'étiquette",
+      "savingLabel": "Enregistrement de l'étiquette...",
+      "failedToSavingLabel": "Échec de l'enregistrement de l'étiquette",
+      "saveLabelSuccess": "Étiquette enregistrée avec succès"
     }
   },
   "navigation": {
@@ -321,7 +354,8 @@
       "archive": "Archives",
       "bin": "Corbeille",
       "feedback": "Vos commentaires",
-      "settings": "Paramètres"
+      "settings": "Paramètres",
+      "voice": "Assistant vocal"
     },
     "settings": {
       "general": "Général",
@@ -331,6 +365,7 @@
       "signatures": "Signatures",
       "shortcuts": "Raccourcis",
       "labels": "Étiquettes",
+      "categories": "Catégories",
       "dangerZone": "Zone dangereuse",
       "deleteAccount": "Supprimer le compte",
       "privacy": "Confidentialité"
@@ -359,7 +394,9 @@
         "customPrompt": "Requêtes IA personnalisées",
         "customPromptPlaceholder": "Entrez votre requête personnalisée pour l'IA...",
         "customPromptDescription": "Personnalisez la façon dont l'IA écrit vos réponses. Cela sera ajouté à la requête par défaut.",
-        "noResultsFound": "Aucun résultat trouvé"
+        "noResultsFound": "Aucun résultat trouvé",
+        "zeroSignature": "Signature Zero",
+        "zeroSignatureDescription": "Ajouter une signature Zero à vos courriels."
       },
       "connections": {
         "title": "Connexions de courriels",
@@ -459,7 +496,15 @@
           "showUpdates": "Afficher les mises à jour",
           "showPromotions": "Afficher les promotions",
           "showUnread": "Afficher les non lus",
-          "selectUnderCursor": "Sélectionner sous le curseur"
+          "selectUnderCursor": "Sélectionner sous le curseur",
+          "openVoice": "Ouvrir l'assistant vocal",
+          "clearAllFilters": "Effacer tous les filtres",
+          "markAsImportant": "Marquer comme important",
+          "markAsUnimportant": "Marquer comme non important",
+          "bulkDelete": "Suppression en masse",
+          "bulkSelect": "Sélection en masse",
+          "bulkArchive": "Archivage en masse",
+          "bulkStar": "Marquage en masse avec étoile"
         }
       },
       "labels": {

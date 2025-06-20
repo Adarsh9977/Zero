@@ -1,6 +1,7 @@
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Github, Mail, ArrowLeft, Link2 } from 'lucide-react';
+import { Navigation } from '@/components/navigation';
 import { Button } from '@/components/ui/button';
 import Footer from '@/components/home/footer';
 import { createSectionId } from '@/lib/utils';
@@ -21,8 +22,9 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-auto bg-white dark:bg-[#111111]">
+      <Navigation />
       <div className="relative z-10 flex flex-grow flex-col">
-        <div className="absolute left-4 top-4 md:left-8 md:top-8">
+        <div className="absolute right-4 top-6 md:left-8 md:top-8 md:right-auto">
           <a href="/">
             <Button
               variant="ghost"
@@ -98,14 +100,14 @@ const sections = [
           handle your data.
         </p>
         <p className="font-semibold">
-          Important: Zero is a client-only email application. We DO NOT store your emails on our servers.
-          All email data is processed directly between your browser and Gmail.
+          Important: Zero is a client-only email application. We DO NOT store your emails on our
+          servers. All email data is processed directly between your browser and Gmail.
         </p>
-        <p>
-          Our verified privacy commitments:
-        </p>
+        <p>Our verified privacy commitments:</p>
         <ul className="ml-4 list-disc space-y-2">
-          <li>Zero Email Storage: We never store your emails - they remain in your Gmail account</li>
+          <li>
+            Zero Email Storage: We never store your emails - they remain in your Gmail account
+          </li>
           <li>Client-Side Processing: All email processing happens in your browser</li>
           <li>Open Source: Our entire codebase is public and can be audited</li>
           <li>Minimal Data: We only request essential Gmail API permissions</li>
@@ -140,11 +142,22 @@ const sections = [
           <h3 className="mb-3 text-lg font-medium">Google Services Data Handling</h3>
           <ul className="ml-4 list-disc space-y-2">
             <li>Email data is processed in accordance with Google API Services User Data Policy</li>
-            <li>We only process and display email data - we don&apos;t store copies of your emails</li>
-            <li>All data transmission between our service and Google is encrypted using industry-standard TLS 1.3 protocols</li>
-            <li>We maintain limited temporary caches only as necessary for application functionality, with a maximum retention period of 24 hours</li>
+            <li>
+              We only process and display email data - we don&apos;t store copies of your emails
+            </li>
+            <li>
+              All data transmission between our service and Google is encrypted using
+              industry-standard TLS 1.3 protocols
+            </li>
+            <li>
+              We maintain limited temporary caches only as necessary for application functionality,
+              with a maximum retention period of 24 hours
+            </li>
             <li>Cached data is encrypted at rest using AES-256 encryption</li>
-            <li>We collect basic usage analytics (page views, feature usage) to improve the service, but this data is anonymized</li>
+            <li>
+              We collect basic usage analytics (page views, feature usage) to improve the service,
+              but this data is anonymized
+            </li>
             <li>Error logs are retained for 30 days to help diagnose and fix issues</li>
           </ul>
         </div>
@@ -178,8 +191,12 @@ const sections = [
         <div>
           <h3 className="mb-3 text-lg font-medium">Security Measures</h3>
           <ul className="ml-4 list-disc space-y-2">
-            <li>End-to-end encryption for all email communications using industry-standard protocols</li>
-            <li>Secure OAuth 2.0 authentication for Google services with strict scope limitations</li>
+            <li>
+              End-to-end encryption for all email communications using industry-standard protocols
+            </li>
+            <li>
+              Secure OAuth 2.0 authentication for Google services with strict scope limitations
+            </li>
             <li>Regular third-party security audits and penetration testing</li>
             <li>Open-source codebase for transparency and community security review</li>
             <li>Compliance with Google API Services User Data Policy and security requirements</li>
@@ -216,8 +233,9 @@ const sections = [
         <div>
           <h3 className="mb-3 text-lg font-medium">Data Access and Usage</h3>
           <ul className="ml-4 list-disc space-y-2">
-            <li>We access the following Google user data through the Gmail API:
-              <ul className="ml-4 list-disc space-y-1 mt-2">
+            <li>
+              We access the following Google user data through the Gmail API:
+              <ul className="ml-4 mt-2 list-disc space-y-1">
                 <li>Email content and attachments</li>
                 <li>Email metadata (subject, dates, recipients)</li>
                 <li>Labels and folder structure</li>
@@ -233,10 +251,19 @@ const sections = [
         <div>
           <h3 className="mb-3 text-lg font-medium">Data Sharing and Transfer</h3>
           <ul className="ml-4 list-disc space-y-2">
-            <li>Google user data is never shared with third parties except as required for core service functionality</li>
-            <li>When necessary, we only work with service providers who comply with Google API Services User Data Policy</li>
+            <li>
+              Google user data is never shared with third parties except as required for core
+              service functionality
+            </li>
+            <li>
+              When necessary, we only work with service providers who comply with Google API
+              Services User Data Policy
+            </li>
             <li>All service providers are bound by strict confidentiality agreements</li>
-            <li>We maintain a current list of all third-party service providers with access to Google user data</li>
+            <li>
+              We maintain a current list of all third-party service providers with access to Google
+              user data
+            </li>
             <li>Data sharing agreements are reviewed annually</li>
             <li>Users are notified of any material changes to our data sharing practices</li>
           </ul>
@@ -247,8 +274,9 @@ const sections = [
             <li>Email data is processed in real-time and not permanently stored</li>
             <li>Temporary caches are automatically cleared after 24 hours</li>
             <li>Users can request immediate deletion of their cached data</li>
-            <li>Account deletion process:
-              <ul className="ml-4 list-disc space-y-1 mt-2">
+            <li>
+              Account deletion process:
+              <ul className="ml-4 mt-2 list-disc space-y-1">
                 <li>All user data is immediately marked for deletion</li>
                 <li>Cached data is purged within 24 hours</li>
                 <li>Audit logs are retained for 30 days then permanently deleted</li>
@@ -307,6 +335,66 @@ const sections = [
         <li>Right to export your data</li>
         <li>Right to lodge complaints about data handling</li>
       </ul>
+    ),
+  },
+  {
+    title: 'Pricing and Refund Policy',
+    content: (
+      <div className="space-y-6">
+        <div>
+          <h3 className="mb-3 text-lg font-medium">Free Plan and Trial Period</h3>
+          <ul className="ml-4 list-disc space-y-2">
+            <li>Zero offers a free plan with basic features that requires no payment information</li>
+            <li>For premium features, we offer a 7-day free trial period</li>
+            <li>A valid credit card is required to start the premium free trial</li>
+            <li>During the trial period, you have full access to all premium features</li>
+            <li>You can cancel at any time during the trial period without any charges</li>
+            <li>If you don't cancel before the trial ends, you'll be automatically charged for the premium subscription</li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="mb-3 text-lg font-medium">Payment and Billing</h3>
+          <ul className="ml-4 list-disc space-y-2">
+            <li>After the 7-day free trial period ends, subscription charges will begin automatically</li>
+            <li>Subscription fees are billed in advance on a monthly or annual basis</li>
+            <li>Current pricing information is available on our pricing page</li>
+            <li>All payments are processed securely through our trusted payment partners</li>
+            <li>Subscription charges will appear on your billing statement as "Zero Email"</li>
+            <li>We accept major credit cards and other payment methods as available in your region</li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="mb-3 text-lg font-medium">Non-Refundable Policy</h3>
+          <ul className="ml-4 list-disc space-y-2">
+            <li className="font-semibold">
+              Important: All subscription fees are non-refundable once the 7-day free trial period has ended
+            </li>
+            <li>This policy applies to all premium subscription plans (monthly, annual, and enterprise plans)</li>
+            <li>Refunds are not provided for partial subscription periods</li>
+            <li>Refunds are not available for unused portions of your subscription</li>
+            <li>In exceptional circumstances, refunds may be considered on a case-by-case basis at our sole discretion</li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="mb-3 text-lg font-medium">Subscription Management</h3>
+          <ul className="ml-4 list-disc space-y-2">
+            <li>You can cancel your subscription at any time through your account settings</li>
+            <li>Cancellation takes effect at the end of your current billing period</li>
+            <li>You will continue to have access to premium features until the end of your paid period</li>
+            <li>No partial refunds are provided for early cancellation</li>
+            <li>Reactivation of cancelled subscriptions may be subject to current pricing</li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="mb-3 text-lg font-medium">Price Changes</h3>
+          <ul className="ml-4 list-disc space-y-2">
+            <li>We reserve the right to modify subscription pricing at any time</li>
+            <li>Existing subscribers will be notified of price changes at least 30 days in advance</li>
+            <li>Price changes will take effect at your next billing cycle</li>
+            <li>You may cancel your subscription before the price change takes effect</li>
+          </ul>
+        </div>
+      </div>
     ),
   },
   {

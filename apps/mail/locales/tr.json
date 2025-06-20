@@ -49,7 +49,14 @@
       "save": "Kaydet",
       "remove": "Kaldır",
       "settings": "Ayarlar",
-      "exitSelectionModeEsc": "Seçim modundan çıkmak için tıklayın veya ESC tuşuna basın"
+      "exitSelectionModeEsc": "Seçim modundan çıkmak için tıklayın veya ESC tuşuna basın",
+      "deleteAllSpam": "Tüm Spam'ı Sil",
+      "deletingAllSpam": "Tüm spam siliniyor...",
+      "deletedAllSpam": "{count} spam e-posta silindi",
+      "errorDeletingSpam": "Spam e-postalar silinemedi",
+      "confirmDeleteSpam": "Tüm Spam'ı Sil",
+      "confirmDeleteSpamDescription": "Tüm spam e-postaları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "confirmDelete": "Sil"
     },
     "themes": {
       "dark": "Koyu",
@@ -76,7 +83,7 @@
         "goToArchive": "Arşive Git",
         "goToBin": "Çöp Kutusuna Git",
         "goToSettings": "Ayarlara Git",
-        "newEmail": "Yeni E-posta",
+        "newEmail": "Yeni e-posta",
         "composeMessage": "Yeni E-posta",
         "searchEmails": "E-postaları Ara",
         "toggleTheme": "Temayı Değiştir",
@@ -84,7 +91,19 @@
         "goToDocs": "Dokümanlara Git",
         "helpWithShortcuts": "Kısayollar Hakkında Yardım",
         "commandPalette": "Komut Paleti"
-      }
+      },
+      "quickResults": "Hızlı Sonuçlar",
+      "searchPlaceholder": "Ara...",
+      "noSearchResults": "Arama sonucu bulunamadı",
+      "actions": "İşlemler",
+      "addFilters": "Filtre ekle",
+      "searchForEmails": "E-posta ara",
+      "filterPlaceholder": "Filtrele...",
+      "noFilterResults": "Filtre sonucu bulunamadı",
+      "availableFilters": "Kullanılabilir filtreler",
+      "examples": "Örnekler",
+      "exampleDate": "Örnek tarih",
+      "exampleSender": "Örnek gönderen"
     },
     "searchBar": {
       "pickDateRange": "Tarih seçin veya aralık seçin",
@@ -129,7 +148,11 @@
       "updates": "Güncellemeler",
       "promotions": "Tanıtımlar",
       "social": "Sosyal Medya",
-      "unread": "Okunmamış"
+      "unread": "Okunmamış",
+      "starred": "Yıldızlı",
+      "notes": "Notlar",
+      "forums": "Forumlar",
+      "work": "İş"
     },
     "replyCompose": {
       "replyTo": "Yanıtla",
@@ -146,6 +169,7 @@
       "details": "Detaylar",
       "from": "Kimden",
       "to": "Kime",
+      "replyTo": "Yanıtla",
       "cc": "Gönderilecek Kişiler",
       "bcc": "Gizli Alıcı",
       "date": "Tarih",
@@ -304,12 +328,21 @@
       "mb": "{amount} MB"
     },
     "labels": {
+      "color": "Renk",
+      "labelName": "Etiket adı",
+      "createLabel": "Etiket oluştur",
       "deleteLabel": "Etiketi sil",
       "deleteLabelConfirm": "Bu etiketi silmek istediğinizden emin misiniz?",
       "deleteLabelConfirmDescription": "Bu eylem geri alınamaz.",
       "deleteLabelConfirmCancel": "İptal",
       "deleteLabelConfirmDelete": "Sil",
-      "deleteLabelSuccess": "Etiket başarıyla silindi"
+      "deleteLabelSuccess": "Etiket başarıyla silindi",
+      "failedToDeleteLabel": "Etiket silinemedi",
+      "deletingLabel": "Etiket siliniyor...",
+      "editLabel": "Etiketi düzenle",
+      "savingLabel": "Etiket kaydediliyor...",
+      "failedToSavingLabel": "Etiket kaydedilemedi",
+      "saveLabelSuccess": "Etiket başarıyla kaydedildi"
     }
   },
   "navigation": {
@@ -321,7 +354,8 @@
       "archive": "Arşiv",
       "bin": "Çöp",
       "feedback": "Geribildirim",
-      "settings": "Ayarlar"
+      "settings": "Ayarlar",
+      "voice": "Sesli Asistan"
     },
     "settings": {
       "general": "Genel",
@@ -331,6 +365,7 @@
       "signatures": "İmzalar",
       "shortcuts": "Kısayollar",
       "labels": "Etiketler",
+      "categories": "Kategoriler",
       "dangerZone": "Tehlikeli Bölge",
       "deleteAccount": "Hesabı Sil",
       "privacy": "Gizlilik"
@@ -359,7 +394,9 @@
         "customPrompt": "Özel Yapay Zeka Yönergesi",
         "customPromptPlaceholder": "Yapay zeka için özel yönergenizi girin...",
         "customPromptDescription": "Yapay zekanın e-posta yanıtlarınızı nasıl yazacağını özelleştirin. Bu, temel yönergeye eklenecektir.",
-        "noResultsFound": "Sonuç bulunamadı"
+        "noResultsFound": "Sonuç bulunamadı",
+        "zeroSignature": "Zero İmzası",
+        "zeroSignatureDescription": "E-postalarınıza Zero imzası ekleyin."
       },
       "connections": {
         "title": "E-posta Bağlantıları",
@@ -459,7 +496,15 @@
           "showUpdates": "Güncellemeleri göster",
           "showPromotions": "Promosyonları göster",
           "showUnread": "Okunmamışları göster",
-          "selectUnderCursor": "İmleç altındakini seç"
+          "selectUnderCursor": "İmleç altındakini seç",
+          "openVoice": "Sesli Asistanı Aç",
+          "clearAllFilters": "Tüm filtreleri temizle",
+          "markAsImportant": "Önemli olarak işaretle",
+          "markAsUnimportant": "Önemsiz olarak işaretle",
+          "bulkDelete": "Toplu sil",
+          "bulkSelect": "Toplu seç",
+          "bulkArchive": "Toplu arşivle",
+          "bulkStar": "Toplu yıldızla"
         }
       },
       "labels": {

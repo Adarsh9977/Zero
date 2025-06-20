@@ -8,16 +8,17 @@ import {
   sanitizeContext,
   StandardizedError,
 } from './utils';
+import type { IOutgoingMessage, Label, ParsedMessage, DeleteAllSpamResponse } from '../../types';
+import { mapGoogleLabelColor, mapToGoogleLabelColor } from './google-label-color-map';
 import { parseAddressList, parseFrom, wasSentWithTLS } from '../email-utils';
-import type { IOutgoingMessage, Label, ParsedMessage } from '../../types';
 import { sanitizeTipTapHtml } from '../sanitize-tip-tap-html';
 import type { MailManager, ManagerConfig } from './types';
 import { type gmail_v1, gmail } from '@googleapis/gmail';
 import { OAuth2Client } from 'google-auth-library';
 import type { CreateDraftData } from '../schemas';
 import { createMimeMessage } from 'mimetext';
-import { cleanSearchValue } from '../utils';
 import { people } from '@googleapis/people';
+import { cleanSearchValue } from '../utils';
 import { env } from 'cloudflare:workers';
 import * as he from 'he';
 
@@ -43,7 +44,24 @@ export class GoogleMailManager implements MailManager {
       'https://www.googleapis.com/auth/userinfo.email',
     ].join(' ');
   }
-  public getAttachment(messageId: string, attachmentId: string) {
+  public async listHistory<T>(historyId: string): Promise<{ history: T[]; historyId: string }> {
+    return this.withErrorHandler(
+      'listHistory',
+      async () => {
+        const response = await this.gmail.users.history.list({
+          userId: 'me',
+          startHistoryId: historyId,
+        });
+
+        const history = response.data.history || [];
+        const nextHistoryId = response.data.historyId || historyId;
+
+        return { history: history as T[], historyId: nextHistoryId };
+      },
+      { historyId },
+    );
+  }
+  public async getAttachment(messageId: string, attachmentId: string) {
     return this.withErrorHandler(
       'getAttachment',
       async () => {
@@ -98,7 +116,18 @@ export class GoogleMailManager implements MailManager {
     return this.withErrorHandler(
       'markAsRead',
       async () => {
-        await this.modifyThreadLabels(threadIds, { removeLabelIds: ['UNREAD'] });
+        const finalIds = (
+          await Promise.all(
+            threadIds.map(async (id) => {
+              const threadMetadata = await this.getThreadMetadata(id);
+              return threadMetadata.messages
+                .filter((msg) => msg.labelIds && msg.labelIds.includes('UNREAD'))
+                .map((msg) => msg.id);
+            }),
+          ).then((idArrays) => [...new Set(idArrays.flat())])
+        ).filter((id): id is string => id !== undefined);
+
+        await this.modifyThreadLabels(finalIds, { removeLabelIds: ['UNREAD'] });
       },
       { threadIds },
     );
@@ -107,7 +136,17 @@ export class GoogleMailManager implements MailManager {
     return this.withErrorHandler(
       'markAsUnread',
       async () => {
-        await this.modifyThreadLabels(threadIds, { addLabelIds: ['UNREAD'] });
+        const finalIds = (
+          await Promise.all(
+            threadIds.map(async (id) => {
+              const threadMetadata = await this.getThreadMetadata(id);
+              return threadMetadata.messages
+                .filter((msg) => msg.labelIds && !msg.labelIds.includes('UNREAD'))
+                .map((msg) => msg.id);
+            }),
+          ).then((idArrays) => [...new Set(idArrays.flat())])
+        ).filter((id): id is string => id !== undefined);
+        await this.modifyThreadLabels(finalIds, { addLabelIds: ['UNREAD'] });
       },
       { threadIds },
     );
@@ -156,13 +195,9 @@ export class GoogleMailManager implements MailManager {
               userId: 'me',
               id: label.id ?? undefined,
             });
-            const count =
-              label.name === 'TRASH'
-                ? Number(res.data.threadsTotal)
-                : Number(res.data.threadsUnread);
             return {
               label: res.data.name ?? res.data.id ?? '',
-              count: count ?? undefined,
+              count: Number(res.data.threadsUnread) ?? undefined,
             };
           }),
         );
@@ -193,11 +228,18 @@ export class GoogleMailManager implements MailManager {
           pageToken: pageToken ? pageToken : undefined,
           quotaUser: this.config.auth?.email,
         });
+
+        const threads = res.data.threads ?? [];
+
         return {
-          threads: (res.data.threads ?? [])
+          threads: threads
             .filter((thread) => typeof thread.id === 'string')
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            .map((thread) => ({ id: thread.id!, $raw: thread })),
+            .map((thread) => ({
+              id: thread.id!,
+              historyId: thread.historyId ?? null,
+              $raw: thread,
+            })),
           nextPageToken: res.data.nextPageToken ?? null,
         };
       },
@@ -313,6 +355,9 @@ export class GoogleMailManager implements MailManager {
                     attachmentId: attachmentId,
                     headers: part.headers || [],
                     body: attachmentData ?? '',
+                    replyTo: message.payload?.headers?.find(
+                      (h) => h.name?.toLowerCase() === 'reply-to',
+                    )?.value,
                   };
                 } catch {
                   return null;
@@ -336,12 +381,13 @@ export class GoogleMailManager implements MailManager {
             return fullEmailData;
           }),
         );
+
         return {
           labels: Array.from(labels).map((id) => ({ id, name: id })),
           messages,
-          latest: messages[messages.length - 1],
+          latest: messages.findLast((e) => !e.isDraft),
           hasUnread,
-          totalReplies: messages.length,
+          totalReplies: messages.filter((e) => !e.isDraft).length,
         };
       },
       { id, email: this.config.auth?.email },
@@ -496,6 +542,7 @@ export class GoogleMailManager implements MailManager {
         return {
           threads: sortedDrafts.map((draft) => ({
             id: draft.id,
+            historyId: draft.threadId ?? null,
             $raw: draft,
           })),
           nextPageToken: res.data.nextPageToken ?? null,
@@ -511,7 +558,16 @@ export class GoogleMailManager implements MailManager {
         const message = await sanitizeTipTapHtml(data.message);
         const msg = createMimeMessage();
         msg.setSender('me');
-        msg.setTo(data.to.split(', ').map((recipient: string) => ({ addr: recipient })));
+        // name <email@example.com>
+        const to = data.to.split(', ').map((recipient: string) => {
+          if (recipient.includes('<')) {
+            const [name, email] = recipient.split('<');
+            return { addr: email.replace('>', ''), name: name.replace('>', '') };
+          }
+          return { addr: recipient };
+        });
+
+        msg.setTo(to);
         if (data.cc)
           msg.setCc(data.cc?.split(', ').map((recipient: string) => ({ addr: recipient })));
         if (data.bcc)
@@ -545,6 +601,7 @@ export class GoogleMailManager implements MailManager {
         const requestBody = {
           message: {
             raw: encodedMessage,
+            threadId: data.threadId,
           },
         };
 
@@ -578,10 +635,10 @@ export class GoogleMailManager implements MailManager {
         id: label.id ?? '',
         name: label.name ?? '',
         type: label.type ?? '',
-        color: {
+        color: mapGoogleLabelColor({
           backgroundColor: label.color?.backgroundColor ?? '',
           textColor: label.color?.textColor ?? '',
-        },
+        }),
       })) ?? []
     );
   }
@@ -593,10 +650,10 @@ export class GoogleMailManager implements MailManager {
     return {
       id: labelId,
       name: res.data.name ?? '',
-      color: {
+      color: mapGoogleLabelColor({
         backgroundColor: res.data.color?.backgroundColor ?? '',
         textColor: res.data.color?.textColor ?? '',
-      },
+      }),
       type: res.data.type ?? 'user',
     };
   }
@@ -611,10 +668,10 @@ export class GoogleMailManager implements MailManager {
         labelListVisibility: 'labelShow',
         messageListVisibility: 'show',
         color: label.color
-          ? {
+          ? mapToGoogleLabelColor({
               backgroundColor: label.color.backgroundColor,
               textColor: label.color.textColor,
-            }
+            })
           : undefined,
       },
     });
@@ -626,10 +683,10 @@ export class GoogleMailManager implements MailManager {
       requestBody: {
         name: label.name,
         color: label.color
-          ? {
+          ? mapToGoogleLabelColor({
               backgroundColor: label.color.backgroundColor,
               textColor: label.color.textColor,
-            }
+            })
           : undefined,
       },
     });
@@ -640,18 +697,83 @@ export class GoogleMailManager implements MailManager {
       id: id,
     });
   }
-  public async revokeRefreshToken(refreshToken: string) {
-    if (!refreshToken) {
-      return false;
-    }
+  public async revokeToken(token: string) {
+    if (!token) return false;
     try {
-      await this.auth.revokeToken(refreshToken);
+      await this.auth.revokeToken(token);
       return true;
     } catch (error: unknown) {
       console.error('Failed to revoke Google token:', (error as Error).message);
       return false;
     }
   }
+
+  public deleteAllSpam() {
+    return this.withErrorHandler(
+      'deleteAllSpam',
+      async () => {
+        let totalDeleted = 0;
+        let hasMoreSpam = true;
+        let pageToken: string | number | null | undefined = undefined;
+
+        while (hasMoreSpam) {
+          const spamThreads = await this.list({
+            folder: 'spam',
+            maxResults: 500,
+            pageToken: pageToken as string | undefined,
+          });
+
+          if (!spamThreads.threads || spamThreads.threads.length === 0) {
+            hasMoreSpam = false;
+            break;
+          }
+
+          const threadIds = spamThreads.threads.map((thread) => thread.id);
+          await this.modifyLabels(threadIds, {
+            addLabels: ['TRASH'],
+            removeLabels: ['SPAM', 'INBOX'],
+          });
+
+          totalDeleted += threadIds.length;
+          pageToken = spamThreads.nextPageToken;
+
+          if (!pageToken) {
+            hasMoreSpam = false;
+          }
+        }
+
+        return {
+          success: true,
+          message: `Deleted ${totalDeleted} spam emails`,
+          count: totalDeleted,
+        };
+      },
+      { email: this.config.auth?.email },
+    );
+  }
+
+  private async getThreadMetadata(threadId: string) {
+    return this.withErrorHandler(
+      'getThreadMetadata',
+      async () => {
+        const res = await this.gmail.users.threads.get({
+          userId: 'me',
+          id: threadId,
+          format: 'metadata', // Fetch only metadata
+        });
+        // Process res.data.messages to extract id and labelIds
+        return {
+          messages:
+            res.data.messages?.map((msg) => ({
+              id: msg.id,
+              labelIds: msg.labelIds,
+            })) || [],
+        };
+      },
+      { threadId, email: this.config.auth?.email },
+    );
+  }
+
   private async modifyThreadLabels(
     threadIds: string[],
     requestBody: gmail_v1.Schema$ModifyThreadRequest,
@@ -797,6 +919,7 @@ export class GoogleMailManager implements MailManager {
       receivedOn,
       subject: subject ? subject.replace(/"/g, '').trim() : '(no subject)',
       messageId,
+      isDraft: labelIds ? labelIds.includes('DRAFT') : false,
     };
   }
   private async parseOutgoing({
@@ -808,13 +931,15 @@ export class GoogleMailManager implements MailManager {
     cc,
     bcc,
     fromEmail,
+    isForward = false,
+    originalMessage = null,
   }: IOutgoingMessage) {
     const msg = createMimeMessage();
 
     const defaultFromEmail = this.config.auth?.email || 'nobody@example.com';
     const senderEmail = fromEmail || defaultFromEmail;
 
-    msg.setSender({ name: '', addr: senderEmail });
+    msg.setSender(`${fromEmail}`);
 
     const uniqueRecipients = new Set<string>();
 
@@ -900,10 +1025,17 @@ export class GoogleMailManager implements MailManager {
 
     msg.setSubject(subject);
 
-    msg.addMessage({
-      contentType: 'text/html',
-      data: await sanitizeTipTapHtml(message.trim()),
-    });
+    if (originalMessage) {
+      msg.addMessage({
+        contentType: 'text/html',
+        data: `${await sanitizeTipTapHtml(message.trim())}${originalMessage}`,
+      });
+    } else {
+      msg.addMessage({
+        contentType: 'text/html',
+        data: await sanitizeTipTapHtml(message.trim()),
+      });
+    }
 
     if (headers) {
       Object.entries(headers).forEach(([key, value]) => {

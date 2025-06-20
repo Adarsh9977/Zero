@@ -8,7 +8,6 @@
       "outputs": ["build/**", "!.react-router/**", "dist/**"]
     },
     "dev": {
-      "dependsOn": ["db:studio"],
       "persistent": true,
       "cache": false
     },
@@ -17,18 +16,6 @@
     },
     "lint": {
       "outputs": []
-    },
-    "db:generate": {
-      "cache": false
-    },
-    "db:migrate": {
-      "cache": false
-    },
-    "db:push": {
-      "cache": false
-    },
-    "db:studio": {
-      "cache": false
     },
     "sentry:sourcemaps": {
       "cache": false

@@ -1,6 +1,6 @@
 import { shortcutSchema } from '../../lib/shortcuts';
+import { getZeroDB } from '../../lib/server-utils';
 import { privateProcedure, router } from '../trpc';
-import { userHotkeys } from '@zero/db/schema';
 import { z } from 'zod';
 
 export const shortcutRouter = router({
@@ -11,22 +11,9 @@ export const shortcutRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { db, session } = ctx;
+      const { sessionUser } = ctx;
       const { shortcuts } = input;
-      await db
-        .insert(userHotkeys)
-        .values({
-          userId: session.user.id,
-          shortcuts,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: userHotkeys.userId,
-          set: {
-            shortcuts,
-            updatedAt: new Date(),
-          },
-        });
+      const db = getZeroDB(sessionUser.id);
+      await db.insertUserHotkeys(sessionUser.id, shortcuts as any);
     }),
 });

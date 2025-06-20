@@ -49,7 +49,14 @@
       "save": "저장",
       "remove": "삭제",
       "settings": "설정",
-      "exitSelectionModeEsc": "선택 모드를 종료하려면 클릭하거나 ESC를 누르세요"
+      "exitSelectionModeEsc": "선택 모드를 종료하려면 클릭하거나 ESC를 누르세요",
+      "deleteAllSpam": "모든 스팸 삭제",
+      "deletingAllSpam": "모든 스팸 삭제 중...",
+      "deletedAllSpam": "{count}개의 스팸 이메일 삭제됨",
+      "errorDeletingSpam": "스팸 이메일 삭제 실패",
+      "confirmDeleteSpam": "모든 스팸 삭제",
+      "confirmDeleteSpamDescription": "모든 스팸 이메일을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+      "confirmDelete": "삭제"
     },
     "themes": {
       "dark": "다크 모드",
@@ -84,7 +91,19 @@
         "goToDocs": "문서로 이동",
         "helpWithShortcuts": "단축키 도움말",
         "commandPalette": "명령 팔레트"
-      }
+      },
+      "quickResults": "빠른 결과",
+      "searchPlaceholder": "검색...",
+      "noSearchResults": "검색 결과 없음",
+      "actions": "동작",
+      "addFilters": "필터 추가",
+      "searchForEmails": "이메일 검색",
+      "filterPlaceholder": "필터...",
+      "noFilterResults": "필터 결과 없음",
+      "availableFilters": "사용 가능한 필터",
+      "examples": "예시",
+      "exampleDate": "날짜 예시",
+      "exampleSender": "발신자 예시"
     },
     "searchBar": {
       "pickDateRange": "날짜 또는 범위 선택",
@@ -129,7 +148,11 @@
       "updates": "업데이트",
       "promotions": "프로모션",
       "social": "소셜",
-      "unread": "읽지 않음"
+      "unread": "읽지 않음",
+      "starred": "별표 처리됨",
+      "notes": "노트",
+      "forums": "포럼",
+      "work": "업무"
     },
     "replyCompose": {
       "replyTo": "회신",
@@ -146,6 +169,7 @@
       "details": "세부 사항",
       "from": "보낸 사람",
       "to": "받는 사람",
+      "replyTo": "회신 대상",
       "cc": "참조",
       "bcc": "숨은참조",
       "date": "날짜",
@@ -304,12 +328,21 @@
       "mb": "{amount} MB"
     },
     "labels": {
+      "color": "색상",
+      "labelName": "라벨 이름",
+      "createLabel": "라벨 생성",
       "deleteLabel": "라벨 삭제",
       "deleteLabelConfirm": "이 라벨을 삭제하시겠습니까?",
       "deleteLabelConfirmDescription": "이 작업은 되돌릴 수 없습니다.",
       "deleteLabelConfirmCancel": "취소",
       "deleteLabelConfirmDelete": "삭제",
-      "deleteLabelSuccess": "라벨이 성공적으로 삭제되었습니다"
+      "deleteLabelSuccess": "라벨이 성공적으로 삭제되었습니다",
+      "failedToDeleteLabel": "라벨 삭제 실패",
+      "deletingLabel": "라벨 삭제 중...",
+      "editLabel": "라벨 편집",
+      "savingLabel": "라벨 저장 중...",
+      "failedToSavingLabel": "라벨 저장 실패",
+      "saveLabelSuccess": "라벨이 성공적으로 저장됨"
     }
   },
   "navigation": {
@@ -321,7 +354,8 @@
       "archive": "보관함",
       "bin": "휴지통",
       "feedback": "피드백",
-      "settings": "설정"
+      "settings": "설정",
+      "voice": "음성 비서"
     },
     "settings": {
       "general": "일반",
@@ -331,6 +365,7 @@
       "signatures": "서명",
       "shortcuts": "단축키",
       "labels": "라벨",
+      "categories": "카테고리",
       "dangerZone": "위험 구역",
       "deleteAccount": "계정 삭제",
       "privacy": "개인정보 보호"
@@ -359,7 +394,9 @@
         "customPrompt": "맞춤 AI 프롬프트",
         "customPromptPlaceholder": "AI를 위한 맞춤 프롬프트를 입력하세요...",
         "customPromptDescription": "AI가 이메일 답장을 작성하는 방식을 맞춤설정하세요. 이것은 기본 프롬프트에 추가됩니다.",
-        "noResultsFound": "검색 결과 없음"
+        "noResultsFound": "검색 결과 없음",
+        "zeroSignature": "Zero 서명",
+        "zeroSignatureDescription": "이메일에 Zero 서명을 추가합니다."
       },
       "connections": {
         "title": "이메일 연결",
@@ -459,7 +496,15 @@
           "showUpdates": "업데이트 표시",
           "showPromotions": "프로모션 표시",
           "showUnread": "읽지 않은 메일 표시",
-          "selectUnderCursor": "커서 아래 항목 선택"
+          "selectUnderCursor": "커서 아래 항목 선택",
+          "openVoice": "음성 비서 열기",
+          "clearAllFilters": "모든 필터 지우기",
+          "markAsImportant": "중요로 표시",
+          "markAsUnimportant": "중요하지 않음으로 표시",
+          "bulkDelete": "일괄 삭제",
+          "bulkSelect": "일괄 선택",
+          "bulkArchive": "일괄 보관",
+          "bulkStar": "일괄 별표 표시"
         }
       },
       "labels": {

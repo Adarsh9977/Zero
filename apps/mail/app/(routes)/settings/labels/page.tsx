@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SettingsCard } from '@/components/settings/settings-card';
+import { LabelDialog } from '@/components/labels/label-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CurvedArrow } from '@/components/icons/icons';
 import { Separator } from '@/components/ui/separator';
@@ -42,63 +43,39 @@ export default function LabelsPage() {
   const { data: labels, isLoading, error, refetch } = useLabels();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLabel, setEditingLabel] = useState<LabelType | null>(null);
-  const form = useForm<LabelType>({
-    defaultValues: {
-      name: '',
-      color: { backgroundColor: '#E2E2E2', textColor: '#000000' },
-    },
-  });
+
   const trpc = useTRPC();
   const { mutateAsync: createLabel } = useMutation(trpc.labels.create.mutationOptions());
   const { mutateAsync: updateLabel } = useMutation(trpc.labels.update.mutationOptions());
   const { mutateAsync: deleteLabel } = useMutation(trpc.labels.delete.mutationOptions());
 
-  const formColor = form.watch('color');
-
-  const onSubmit = async (data: LabelType) => {
-    toast.promise(
+  const handleSubmit = async (data: LabelType) => {
+    await toast.promise(
       editingLabel
         ? updateLabel({ id: editingLabel.id!, name: data.name, color: data.color })
         : createLabel({ color: data.color, name: data.name }),
       {
-        loading: 'Saving label...',
-        success: 'Label saved successfully',
-        error: 'Failed to save label',
-        finally: async () => {
-          await refetch();
-          handleClose();
-        },
+        loading: t('common.labels.savingLabel'),
+        success: t('common.labels.saveLabelSuccess'),
+        error: t('common.labels.failedToSavingLabel'),
       },
     );
   };
 
   const handleDelete = async (id: string) => {
     toast.promise(deleteLabel({ id }), {
-      loading: 'Deleting label...',
-      success: 'Label deleted successfully',
-      error: 'Failed to delete label',
+      loading:  t('common.labels.deletingLabel'),
+      success: t('common.labels.deleteLabelSuccess'),
+      error: t('common.labels.failedToDeleteLabel'),
       finally: async () => {
         await refetch();
       },
     });
   };
 
-  const handleEdit = async (label: LabelType) => {
+  const handleEdit = (label: LabelType) => {
     setEditingLabel(label);
-    form.reset({
-      name: label.name,
-      color: label.color,
-    });
     setIsDialogOpen(true);
-  };
-
-  const handleClose = () => {
-    setIsDialogOpen(false);
-    setEditingLabel(null);
-    form.reset({
-      name: '',
-      color: { backgroundColor: '#E2E2E2', textColor: '#000000' },
-    });
   };
 
   return (
@@ -107,111 +84,22 @@ export default function LabelsPage() {
         title={t('pages.settings.labels.title')}
         description={t('pages.settings.labels.description')}
         action={
-          <Form {...form}>
-            <form>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => setEditingLabel(null)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Label
-                  </Button>
-                </DialogTrigger>
-                <div className="container mx-auto max-w-[750px]">
-                  <DialogContent showOverlay={true}>
-                    <DialogHeader>
-                      <DialogTitle>{editingLabel ? 'Edit Label' : 'Create New Label'}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Label Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter label name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-4">
-                        <Label>Color</Label>
-                        <div className="w-full">
-                          <div className="grid grid-cols-7 gap-4">
-                            {[
-                              // Row 1 - Grayscale
-                              '#000000',
-                              '#434343',
-                              '#666666',
-                              '#999999',
-                              '#cccccc',
-                              '#ffffff',
-                              // Row 2 - Warm colors
-                              '#fb4c2f',
-                              '#ffad47',
-                              '#fad165',
-                              '#ff7537',
-                              '#cc3a21',
-                              '#8a1c0a',
-                              // Row 3 - Cool colors
-                              '#16a766',
-                              '#43d692',
-                              '#4a86e8',
-                              '#285bac',
-                              '#3c78d8',
-                              '#0d3472',
-                              // Row 4 - Purple tones
-                              '#a479e2',
-                              '#b99aff',
-                              '#653e9b',
-                              '#3d188e',
-                              '#f691b3',
-                              '#994a64',
-                              // Row 5 - Pastels
-                              '#f6c5be',
-                              '#ffe6c7',
-                              '#c6f3de',
-                              '#c9daf8',
-                            ].map((color) => (
-                              <button
-                                key={color}
-                                type="button"
-                                className={`h-10 w-10 rounded-[4px] border-[0.5px] border-white/10 ${
-                                  formColor?.backgroundColor === color ? 'ring-2 ring-blue-500' : ''
-                                }`}
-                                style={{ backgroundColor: color }}
-                                onClick={() =>
-                                  form.setValue('color', {
-                                    backgroundColor: color,
-                                    textColor: '#ffffff',
-                                  })
-                                }
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button className="h-8" type="button" variant="outline" onClick={handleClose}>
-                        Cancel
-                      </Button>
-                      <Button className="h-8 [&_svg]:size-4" onClick={form.handleSubmit(onSubmit)}>
-                        {editingLabel ? 'Save Changes' : 'Create Label'}
-                        <div className="flex h-5 items-center justify-center gap-1 rounded-sm bg-white/10 px-1 dark:bg-black/10">
-                          <Command className="h-3 w-3 text-white dark:text-[#929292]" />
-                          <CurvedArrow className="mt-1.5 h-3.5 w-3.5 fill-white dark:fill-[#929292]" />
-                        </div>
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </div>
-              </Dialog>
-            </form>
-          </Form>
+          <LabelDialog
+            trigger={
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('common.mail.createNewLabel')}
+              </Button>
+            }
+            editingLabel={editingLabel}
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) setEditingLabel(null);
+            }}
+            onSubmit={handleSubmit}
+            onSuccess={refetch}
+          />
         }
       >
         <div className="space-y-6">
@@ -226,10 +114,10 @@ export default function LabelsPage() {
                 <p className="text-muted-foreground py-4 text-center text-sm">{error.message}</p>
               ) : labels?.length === 0 ? (
                 <p className="text-muted-foreground py-4 text-center text-sm">
-                  No labels created yet. Click the button above to create one.
+                 {t('common.mail.noLabelsAvailable')}
                 </p>
               ) : (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6">
                   {labels?.map((label) => {
                     return (
                       <div
@@ -241,14 +129,13 @@ export default function LabelsPage() {
                             className="px-2 py-1"
                             style={{
                               backgroundColor: label.color?.backgroundColor,
+                              color: label.color?.textColor,
                             }}
                           >
-                            <span className="dark:text-whitemix-blend-difference darK:text-black">
-                              {label.name}
-                            </span>
+                            <span>{label.name}</span>
                           </Badge>
                         </div>
-                        <div className="absolute right-2 z-[25] flex items-center gap-1 rounded-xl border bg-white p-1 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 dark:bg-[#1A1A1A]">
+                        <div className="dark:bg-panelDark absolute right-2 z-[25] flex items-center gap-1 rounded-xl border bg-white p-1 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
@@ -260,8 +147,8 @@ export default function LabelsPage() {
                                 <Pencil className="text-[#898989]" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
-                              Edit Label
+                            <TooltipContent className="dark:bg-panelDark mb-1 bg-white">
+                               {t('common.labels.editLabel')}
                             </TooltipContent>
                           </Tooltip>
                           <Tooltip>
@@ -275,8 +162,8 @@ export default function LabelsPage() {
                                 <Bin className="fill-[#F43F5E]" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent className="mb-1 bg-white dark:bg-[#1A1A1A]">
-                              Delete Label
+                            <TooltipContent className="dark:bg-panelDark mb-1 bg-white">
+                              {t('common.labels.deleteLabel')}
                             </TooltipContent>
                           </Tooltip>
                         </div>

@@ -1,7 +1,7 @@
 import { default as flattenColorPalette } from 'tailwindcss/lib/util/flattenColorPalette';
 import sharedConfig from '../../packages/tailwind-config/tailwind.config';
-import scrollbar from 'tailwind-scrollbar';
 import defaultTheme from 'tailwindcss/defaultTheme';
+import scrollbar from 'tailwind-scrollbar';
 import animate from 'tailwindcss-animate';
 
 import type { Config } from 'tailwindcss';
@@ -88,8 +88,28 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Geist', ...defaultTheme.fontFamily.sans],
-        mono: ['Geist_Mono', ...defaultTheme.fontFamily.mono],
+        sans: [
+          '"Geist Variable"',
+          'Geist',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'system-ui',
+          'sans-serif',
+          ...defaultTheme.fontFamily.sans,
+        ],
+        mono: [
+          '"Geist Mono Variable"',
+          '"Geist Mono"',
+          'ui-monospace',
+          'SFMono-Regular',
+          '"SF Mono"',
+          'Consolas',
+          '"Liberation Mono"',
+          'Menlo',
+          'monospace',
+          ...defaultTheme.fontFamily.mono,
+        ],
       },
       keyframes: {
         'fade-up': {
@@ -181,7 +201,7 @@ export default {
     scrollbar({
       nocompatible: true,
       preferredStrategy: 'pseudoelements',
-  })
+    }),
   ],
 } satisfies Config;
 

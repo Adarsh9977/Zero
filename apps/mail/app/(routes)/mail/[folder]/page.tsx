@@ -1,4 +1,4 @@
-import { useLoaderData, useNavigate } from 'react-router';
+import { Navigate, useLoaderData, useNavigate } from 'react-router';
 import { useTRPC } from '@/providers/query-provider';
 import { MailLayout } from '@/components/mail/mail';
 import { useQuery } from '@tanstack/react-query';
@@ -9,7 +9,9 @@ import { Loader2 } from 'lucide-react';
 
 const ALLOWED_FOLDERS = ['inbox', 'draft', 'sent', 'spam', 'bin', 'archive'];
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
+  if (!params.folder) return Response.redirect(`${import.meta.env.VITE_PUBLIC_APP_URL}/mail/inbox`);
+
   const session = await authProxy.api.getSession({ headers: request.headers });
   if (!session) return Response.redirect(`${import.meta.env.VITE_PUBLIC_APP_URL}/login`);
 
@@ -19,7 +21,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 }
 
 export default function MailPage() {
-  const { folder } = useLoaderData<typeof loader>();
+  const { folder } = useLoaderData<typeof clientLoader>();
   const navigate = useNavigate();
   const trpc = useTRPC();
   const [isLabelValid, setIsLabelValid] = useState<boolean | null>(null);
@@ -71,7 +73,6 @@ export default function MailPage() {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="text-primary h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading folder...</span>
       </div>
     );
   }

@@ -49,7 +49,14 @@
       "save": "Desar",
       "remove": "Eliminar",
       "settings": "Configuració",
-      "exitSelectionModeEsc": "Fes clic o prem ESC per sortir del mode de selecció"
+      "exitSelectionModeEsc": "Fes clic o prem ESC per sortir del mode de selecció",
+      "deleteAllSpam": "Eliminar tot el correu brossa",
+      "deletingAllSpam": "Eliminant tot el correu brossa...",
+      "deletedAllSpam": "S'han eliminat {count} correus brossa",
+      "errorDeletingSpam": "No s'han pogut eliminar els correus brossa",
+      "confirmDeleteSpam": "Eliminar tot el correu brossa",
+      "confirmDeleteSpamDescription": "Esteu segur que voleu eliminar tots els correus brossa? Aquesta acció no es pot desfer.",
+      "confirmDelete": "Eliminar"
     },
     "themes": {
       "dark": "Fosc",
@@ -84,7 +91,19 @@
         "goToDocs": "Anar a la documentació",
         "helpWithShortcuts": "Ajuda amb les dreceres",
         "commandPalette": "Paleta de comandes"
-      }
+      },
+      "quickResults": "Resultats ràpids",
+      "searchPlaceholder": "Cerca...",
+      "noSearchResults": "Sense resultats de cerca",
+      "actions": "Accions",
+      "addFilters": "Afegir filtres",
+      "searchForEmails": "Cercar correus",
+      "filterPlaceholder": "Filtre...",
+      "noFilterResults": "Sense resultats de filtre",
+      "availableFilters": "Filtres disponibles",
+      "examples": "Exemples",
+      "exampleDate": "Data d'exemple",
+      "exampleSender": "Remitent d'exemple"
     },
     "searchBar": {
       "pickDateRange": "Selecciona una data o un interval",
@@ -129,7 +148,11 @@
       "updates": "Actualitzacions",
       "promotions": "Promocions",
       "social": "Social",
-      "unread": "No llegits"
+      "unread": "No llegits",
+      "starred": "Destacats",
+      "notes": "Notes",
+      "forums": "Fòrums",
+      "work": "Feina"
     },
     "replyCompose": {
       "replyTo": "Respon a",
@@ -146,6 +169,7 @@
       "details": "Detalls",
       "from": "De",
       "to": "A",
+      "replyTo": "Respondre a",
       "cc": "Cc",
       "bcc": "Cco",
       "date": "Data",
@@ -304,12 +328,21 @@
       "mb": "{amount} MB"
     },
     "labels": {
+      "color": "Color",
+      "labelName": "Nom de l'etiqueta",
+      "createLabel": "Crear etiqueta",
       "deleteLabel": "Eliminar etiqueta",
       "deleteLabelConfirm": "Estàs segur que vols eliminar aquesta etiqueta?",
       "deleteLabelConfirmDescription": "Aquesta acció no es pot desfer.",
       "deleteLabelConfirmCancel": "Cancel·lar",
       "deleteLabelConfirmDelete": "Eliminar",
-      "deleteLabelSuccess": "Etiqueta eliminada correctament"
+      "deleteLabelSuccess": "Etiqueta eliminada correctament",
+      "failedToDeleteLabel": "No s'ha pogut eliminar l'etiqueta",
+      "deletingLabel": "Eliminant etiqueta...",
+      "editLabel": "Editar etiqueta",
+      "savingLabel": "Desant etiqueta...",
+      "failedToSavingLabel": "No s'ha pogut desar l'etiqueta",
+      "saveLabelSuccess": "Etiqueta desada correctament"
     }
   },
   "navigation": {
@@ -321,7 +354,8 @@
       "archive": "Arxivats",
       "bin": "Paperera",
       "feedback": "Feedback",
-      "settings": "Configuració"
+      "settings": "Configuració",
+      "voice": "Assistent de veu"
     },
     "settings": {
       "general": "General",
@@ -331,6 +365,7 @@
       "signatures": "Signatures",
       "shortcuts": "Dreceres",
       "labels": "Etiquetes",
+      "categories": "Categories",
       "dangerZone": "Zona perillosa",
       "deleteAccount": "Elimina el compte",
       "privacy": "Privacitat"
@@ -359,7 +394,9 @@
         "customPrompt": "Instrucció personalitzada per a la IA",
         "customPromptPlaceholder": "Introdueix la teva instrucció personalitzada per a la IA...",
         "customPromptDescription": "Personalitza com la IA escriu les teves respostes de correu. Això s'afegirà a la instrucció base.",
-        "noResultsFound": "No s'han trobat resultats"
+        "noResultsFound": "No s'han trobat resultats",
+        "zeroSignature": "Signatura Zero",
+        "zeroSignatureDescription": "Afegeix una signatura Zero als teus correus."
       },
       "connections": {
         "title": "Connexions Correu",
@@ -459,7 +496,15 @@
           "showUpdates": "Mostrar actualitzacions",
           "showPromotions": "Mostrar promocions",
           "showUnread": "Mostrar no llegits",
-          "selectUnderCursor": "Seleccionar sota el cursor"
+          "selectUnderCursor": "Seleccionar sota el cursor",
+          "openVoice": "Obrir l'assistent de veu",
+          "clearAllFilters": "Esborrar tots els filtres",
+          "markAsImportant": "Marcar com a important",
+          "markAsUnimportant": "Marcar com a no important",
+          "bulkDelete": "Eliminació massiva",
+          "bulkSelect": "Selecció massiva",
+          "bulkArchive": "Arxivat massiu",
+          "bulkStar": "Destacar massivament"
         }
       },
       "labels": {

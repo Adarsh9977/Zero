@@ -12,8 +12,8 @@ import { authClient } from '@/lib/auth-client';
 import { Plus, UserPlus } from 'lucide-react';
 import { useLocation } from 'react-router';
 import { useTranslations } from 'use-intl';
-import { Button } from '../ui/button';
 import { motion } from 'motion/react';
+import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
@@ -80,7 +80,7 @@ export const AddConnectionDialog = ({
                 onClick={handleUpgrade}
                 className="hover:bg-subtleWhite hover:text-subtleBlack cursor-pointer underline"
               >
-                Upgrade
+                Start 7 day free trial
               </span>{' '}
               to connect more.
             </span>

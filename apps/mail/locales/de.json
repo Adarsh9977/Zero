@@ -49,7 +49,14 @@
       "save": "Speichern",
       "remove": "Entfernen",
       "settings": "Einstellungen",
-      "exitSelectionModeEsc": "Klicken oder ESC drücken, um den Auswahlmodus zu verlassen"
+      "exitSelectionModeEsc": "Klicken oder ESC drücken, um den Auswahlmodus zu verlassen",
+      "deleteAllSpam": "Alle Spam-Nachrichten löschen",
+      "deletingAllSpam": "Alle Spam-Nachrichten werden gelöscht...",
+      "deletedAllSpam": "{count} Spam-E-Mails gelöscht",
+      "errorDeletingSpam": "Spam-E-Mails konnten nicht gelöscht werden",
+      "confirmDeleteSpam": "Alle Spam-Nachrichten löschen",
+      "confirmDeleteSpamDescription": "Sind Sie sicher, dass Sie alle Spam-E-Mails löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirmDelete": "Löschen"
     },
     "themes": {
       "dark": "Dunkel",
@@ -76,7 +83,7 @@
         "goToArchive": "Zum Archiv",
         "goToBin": "Zum Papierkorb",
         "goToSettings": "Zu den Einstellungen",
-        "newEmail": "Neue E-Mail verfassen",
+        "newEmail": "Neue E-Mail",
         "composeMessage": "Neue E-Mail verfassen",
         "searchEmails": "E-Mails suchen",
         "toggleTheme": "Theme wechseln",
@@ -84,7 +91,19 @@
         "goToDocs": "Zur Dokumentation",
         "helpWithShortcuts": "Hilfe für Tastenkürzel",
         "commandPalette": "Befehlspalette"
-      }
+      },
+      "quickResults": "Schnelle Ergebnisse",
+      "searchPlaceholder": "Suchen...",
+      "noSearchResults": "Keine Suchergebnisse",
+      "actions": "Aktionen",
+      "addFilters": "Filter hinzufügen",
+      "searchForEmails": "Nach E-Mails suchen",
+      "filterPlaceholder": "Filtern...",
+      "noFilterResults": "Keine Filterergebnisse",
+      "availableFilters": "Verfügbare Filter",
+      "examples": "Beispiele",
+      "exampleDate": "Beispieldatum",
+      "exampleSender": "Beispielabsender"
     },
     "searchBar": {
       "pickDateRange": "Wähle ein Datum oder Zeitraum",
@@ -129,7 +148,11 @@
       "updates": "Updates",
       "promotions": "Werbung",
       "social": "Sozial",
-      "unread": "Ungelesen"
+      "unread": "Ungelesen",
+      "starred": "Favoriten",
+      "notes": "Notizen",
+      "forums": "Foren",
+      "work": "Arbeit"
     },
     "replyCompose": {
       "replyTo": "Antwort an",
@@ -146,6 +169,7 @@
       "details": "Details",
       "from": "Von",
       "to": "An",
+      "replyTo": "Antwort an",
       "cc": "Cc",
       "bcc": "Bcc",
       "date": "Datum",
@@ -304,12 +328,21 @@
       "mb": "{amount} MB"
     },
     "labels": {
+      "color": "Farbe",
+      "labelName": "Label-Name",
+      "createLabel": "Label erstellen",
       "deleteLabel": "Label löschen",
       "deleteLabelConfirm": "Sind Sie sicher, dass Sie dieses Label löschen möchten?",
       "deleteLabelConfirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden.",
       "deleteLabelConfirmCancel": "Abbrechen",
       "deleteLabelConfirmDelete": "Löschen",
-      "deleteLabelSuccess": "Label erfolgreich gelöscht"
+      "deleteLabelSuccess": "Label erfolgreich gelöscht",
+      "failedToDeleteLabel": "Label konnte nicht gelöscht werden",
+      "deletingLabel": "Label wird gelöscht...",
+      "editLabel": "Label bearbeiten",
+      "savingLabel": "Label wird gespeichert...",
+      "failedToSavingLabel": "Label konnte nicht gespeichert werden",
+      "saveLabelSuccess": "Label erfolgreich gespeichert"
     }
   },
   "navigation": {
@@ -321,7 +354,8 @@
       "archive": "Archiv",
       "bin": "Papierkorb",
       "feedback": "Rückmeldung",
-      "settings": "Einstellungen"
+      "settings": "Einstellungen",
+      "voice": "Sprachassistent"
     },
     "settings": {
       "general": "Allgemein",
@@ -331,6 +365,7 @@
       "signatures": "Signaturen",
       "shortcuts": "Shortcuts",
       "labels": "Labels",
+      "categories": "Kategorien",
       "dangerZone": "Gefahrenbereich",
       "deleteAccount": "Konto löschen",
       "privacy": "Datenschutz"
@@ -359,7 +394,9 @@
         "customPrompt": "Benutzerdefinierte KI-Aufforderung",
         "customPromptPlaceholder": "Geben Sie Ihre benutzerdefinierte Eingabeaufforderung für die KI ein...",
         "customPromptDescription": "Passen Sie an, wie die KI Ihre E-Mail beantwortet. Dies wird zur Base-Prompt hinzugefügt.",
-        "noResultsFound": "Keine Ergebnisse gefunden"
+        "noResultsFound": "Keine Ergebnisse gefunden",
+        "zeroSignature": "Zero-Signatur",
+        "zeroSignatureDescription": "Füge deinen E-Mails eine Zero-Signatur hinzu."
       },
       "connections": {
         "title": "E-Mail Verbindungen",
@@ -459,7 +496,15 @@
           "showUpdates": "Updates anzeigen",
           "showPromotions": "Werbeaktionen anzeigen",
           "showUnread": "Ungelesene anzeigen",
-          "selectUnderCursor": "Unter Cursor auswählen"
+          "selectUnderCursor": "Unter Cursor auswählen",
+          "openVoice": "Sprachassistent öffnen",
+          "clearAllFilters": "Alle Filter löschen",
+          "markAsImportant": "Als wichtig markieren",
+          "markAsUnimportant": "Als unwichtig markieren",
+          "bulkDelete": "Mehrere löschen",
+          "bulkSelect": "Mehrere auswählen",
+          "bulkArchive": "Mehrere archivieren",
+          "bulkStar": "Mehrere mit Stern markieren"
         }
       },
       "labels": {

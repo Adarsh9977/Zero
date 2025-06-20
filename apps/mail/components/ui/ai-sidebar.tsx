@@ -1,49 +1,25 @@
-import {
-  X,
-  FileText,
-  Expand,
-  Plus,
-  Maximize2 as LucideMaximize2,
-  Minimize2 as LucideMinimize2,
-} from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from './dialog';
-import {
-  useState,
-  useEffect,
-  useContext,
-  createContext,
-  useCallback,
-  useMemo,
-  useRef,
-} from 'react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { ArrowsPointingIn, ArrowsPointingOut, PanelLeftOpen, Phone } from '../icons/icons';
-import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
-import { StyledEmailAssistantSystemPrompt, AiChatPrompt } from '@/lib/prompts';
-import { Link, useLocation, useParams } from 'react-router';
+import { ArrowsPointingIn, PanelLeftOpen, Phone } from '../icons/icons';
+import { useActiveConnection } from '@/hooks/use-connections';
+import { ResizablePanel } from '@/components/ui/resizable';
 import { useSearchValue } from '@/hooks/use-search-value';
+import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AIChat } from '@/components/create/ai-chat';
 import { useTRPC } from '@/providers/query-provider';
 import { Tools } from '../../../server/src/types';
 import { useBilling } from '@/hooks/use-billing';
-import { PricingDialog } from './pricing-dialog';
 import { PromptsDialog } from './prompts-dialog';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useLabels } from '@/hooks/use-labels';
+import { useSession } from '@/lib/auth-client';
+import { useAgentChat } from 'agents/ai-react';
+import { X, Expand, Plus } from 'lucide-react';
 import { Gauge } from '@/components/ui/gauge';
+import { useParams } from 'react-router';
 import { useChat } from '@ai-sdk/react';
-import { getCookie } from '@/lib/utils';
-import { Textarea } from './textarea';
+import { useAgent } from 'agents/react';
 import { useQueryState } from 'nuqs';
 import { cn } from '@/lib/utils';
 import posthog from 'posthog-js';
@@ -55,9 +31,7 @@ interface ChatHeaderProps {
   onToggleViewMode: () => void;
   isFullScreen: boolean;
   isPopup: boolean;
-  chatMessages: { remaining: number };
   isPro: boolean;
-  onUpgrade: () => void;
   onNewChat: () => void;
 }
 
@@ -67,14 +41,13 @@ function ChatHeader({
   onToggleViewMode,
   isFullScreen,
   isPopup,
-  chatMessages,
   isPro,
-  onUpgrade,
   onNewChat,
 }: ChatHeaderProps) {
-  const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [, setPricingDialog] = useQueryState('pricingDialog');
+  const { chatMessages } = useBilling();
   return (
-    <div className="relative flex items-center justify-between border-b border-[#E7E7E7] px-2.5 pb-[10px] pt-[13px] dark:border-[#252525]">
+    <div className="relative flex items-center justify-between px-2.5 pb-[10px] pt-[13px]">
       <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -150,28 +123,32 @@ function ChatHeader({
               <Tooltip>
                 <TooltipTrigger asChild className="md:h-fit md:px-2">
                   <div>
-                    <Gauge value={50 - chatMessages.remaining!} size="small" showValue={true} />
+                    <Gauge
+                      max={chatMessages.included_usage}
+                      value={chatMessages.usage}
+                      size="small"
+                      showValue={true}
+                    />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>You've used {50 - chatMessages.remaining!} out of 50 chat messages.</p>
+                  <p>
+                    You've used {chatMessages.usage} out of {chatMessages.included_usage} chat
+                    messages.
+                  </p>
                   <p className="mb-2">Upgrade for unlimited messages!</p>
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setIsPricingOpen(true);
-                      onUpgrade();
+                      setPricingDialog('true');
                     }}
                     className="h-8 w-full"
                   >
-                    Upgrade
+                    Start 7 day free trial
                   </Button>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <PricingDialog open={isPricingOpen} onOpenChange={setIsPricingOpen}>
-              <div className="hidden" />
-            </PricingDialog>
           </>
         )}
 
@@ -314,26 +291,17 @@ export function useAISidebar() {
     [setViewModeQuery],
   );
 
-  // Function to set open state and save to localStorage
   const setOpen = useCallback(
     (openState: boolean) => {
-      // For closing, we need to handle state updates more carefully
       if (!openState) {
-        // First remove from localStorage immediately
         if (typeof window !== 'undefined') {
           localStorage.removeItem('ai-sidebar-open');
         }
-
-        // Use setTimeout to ensure the query update happens in the next tick
-        // This helps prevent the need for double-clicking
         setTimeout(() => {
           setOpenQuery(null).catch(console.error);
         }, 0);
       } else {
-        // For opening, we can use the normal flow
         setOpenQuery('true').catch(console.error);
-
-        // Save to localStorage
         if (typeof window !== 'undefined') {
           localStorage.setItem('ai-sidebar-open', 'true');
         }
@@ -342,23 +310,8 @@ export function useAISidebar() {
     [setOpenQuery],
   );
 
-  // Toggle open state
-  const toggleOpen = useCallback(() => {
-    const newState = !(open === 'true');
-    setOpen(newState);
-  }, [open, setOpen]);
+  const toggleOpen = useCallback(() => setOpen(open !== 'true'), [open, setOpen]);
 
-  // Initialize from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !open) {
-      const savedOpen = localStorage.getItem('ai-sidebar-open');
-      if (savedOpen === 'true') {
-        setOpenQuery('true');
-      }
-    }
-  }, [open, setOpenQuery]);
-
-  // Sync with query parameters on mount or when they change
   useEffect(() => {
     if (viewModeQuery && viewModeQuery !== viewMode) {
       setViewModeState(viewModeQuery as ViewMode);
@@ -392,22 +345,25 @@ function AISidebar({ className }: AISidebarProps) {
     isSidebar,
     isPopup,
   } = useAISidebar();
-  const [resetKey, setResetKey] = useState(0);
-  const [showPricing, setShowPricing] = useState(false);
-  const { isPro, chatMessages, track, refetch: refetchBilling } = useBilling();
-  const pathname = useLocation().pathname;
+  const { isPro, track, refetch: refetchBilling } = useBilling();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const [threadId, setThreadId] = useQueryState('threadId');
   const { folder } = useParams<{ folder: string }>();
   const { refetch: refetchLabels } = useLabels();
   const [searchValue] = useSearchValue();
+  const { data: session } = useSession();
+  const { data: activeConnection } = useActiveConnection();
 
-  // Initialize shared chat state that will be used by both desktop and mobile views
-  // This ensures conversation continuity when switching between viewport sizes
-  const chatState = useChat({
-    api: `${import.meta.env.VITE_PUBLIC_BACKEND_URL}/api/chat`,
-    fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
+  const agent = useAgent({
+    agent: 'ZeroAgent',
+    name: activeConnection?.id ? String(activeConnection.id) : 'general',
+    host: `${import.meta.env.VITE_PUBLIC_BACKEND_URL}`,
+  });
+
+  const chatState = useAgentChat({
+    agent,
+    initialMessages: [],
     maxSteps: 5,
     body: {
       threadId: threadId ?? undefined,
@@ -476,26 +432,13 @@ function AISidebar({ className }: AISidebarProps) {
     },
   });
 
-  const handleUpgrade = () => {
-    setShowPricing(true);
-  };
-
   useHotkeys('Meta+0', () => {
     setOpen(!open);
   });
 
-  useHotkeys('Control+0', () => {
-    setOpen(!open);
-  });
-
   const handleNewChat = useCallback(() => {
-    // Reset threadId query parameter
-    setThreadId(null);
-    // Reset chat state by forcing a remount of AIChat component
-    setResetKey((prev) => prev + 1);
-    // Reset chat messages by setting them to empty
     chatState.setMessages([]);
-  }, [setThreadId, chatState]);
+  }, [chatState]);
 
   return (
     <>
@@ -509,7 +452,7 @@ function AISidebar({ className }: AISidebarProps) {
                 defaultSize={24}
                 minSize={24}
                 maxSize={24}
-                className="bg-panelLight dark:bg-panelDark mb-1 mr-1 hidden h-[calc(100dvh-8px)] border-[#E7E7E7] shadow-sm md:block md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+                className="bg-panelLight dark:bg-panelDark mb-1 mr-1 hidden h-[calc(100dvh-8px)] shadow-sm md:block md:rounded-2xl md:shadow-sm"
               >
                 <div className={cn('h-[calc(98vh)]', 'flex flex-col', '', className)}>
                   <div className="flex h-full flex-col">
@@ -522,13 +465,11 @@ function AISidebar({ className }: AISidebarProps) {
                       onToggleViewMode={toggleViewMode}
                       isFullScreen={isFullScreen}
                       isPopup={isPopup}
-                      chatMessages={chatMessages}
                       isPro={isPro ?? false}
-                      onUpgrade={handleUpgrade}
                       onNewChat={handleNewChat}
                     />
                     <div className="relative flex-1 overflow-hidden">
-                      <AIChat key={resetKey} {...chatState} />
+                      <AIChat {...chatState} />
                     </div>
                   </div>
                 </div>
@@ -570,13 +511,11 @@ function AISidebar({ className }: AISidebarProps) {
                   onToggleViewMode={toggleViewMode}
                   isFullScreen={isFullScreen}
                   isPopup={isPopup}
-                  chatMessages={chatMessages}
                   isPro={isPro ?? false}
-                  onUpgrade={handleUpgrade}
                   onNewChat={handleNewChat}
                 />
                 <div className="relative flex-1 overflow-hidden">
-                  <AIChat key={resetKey} {...chatState} />
+                  <AIChat {...chatState} />
                 </div>
               </div>
             </div>
